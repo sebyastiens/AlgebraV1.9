@@ -112,10 +112,8 @@ contract AlgebraPool is PoolState, PoolImmutables, IAlgebraPool {
     uint160 currentPrice;
     int24 currentTick;
     uint128 currentLiquidity;
-    // function _calculateSwapAndLock locks globalState.unlocked and does not release
     (amount0, amount1, currentPrice, currentTick, currentLiquidity) = _calculateSwapAndLock(zeroToOne, amountRequired, limitSqrtPrice);
   
-    globalState.unlocked = true; // release after lock in _calculateSwapAndLock
   }
 
   /// @inheritdoc IAlgebraPoolActions
@@ -129,17 +127,12 @@ contract AlgebraPool is PoolState, PoolImmutables, IAlgebraPool {
   ) external override returns (int256 amount0, int256 amount1) {
     // Since the pool can get less tokens then sent, firstly we are getting tokens from the
     // original caller of the transaction. And change the _amountRequired_
-    require(globalState.unlocked, 'LOK');
-    globalState.unlocked = false;
-    globalState.unlocked = true;
-
+  
     uint160 currentPrice;
     int24 currentTick;
     uint128 currentLiquidity;
-    // function _calculateSwapAndLock locks 'globalState.unlocked' and does not release
     (amount0, amount1, currentPrice, currentTick, currentLiquidity) = _calculateSwapAndLock(zeroToOne, amountRequired, limitSqrtPrice);
 
-    globalState.unlocked = true; // release after lock in _calculateSwapAndLock
   }
 
   struct SwapCalculationCache {
@@ -165,7 +158,6 @@ contract AlgebraPool is PoolState, PoolImmutables, IAlgebraPool {
     uint256 feeAmount; // The total amount of fee earned within a current step
   }
 
-  /// @notice For gas optimization, locks 'globalState.unlocked' and does not release.
   function _calculateSwapAndLock(
     bool zeroToOne,
     int256 amountRequired,
@@ -188,11 +180,6 @@ contract AlgebraPool is PoolState, PoolImmutables, IAlgebraPool {
       currentTick = globalState.tick;
       cache.fee = zeroToOne ? globalState.feeZto : globalState.feeOtz;
       cache.timepointIndex = globalState.timepointIndex;
-      
-      bool unlocked = globalState.unlocked;
-
-      globalState.unlocked = false; // lock will not be released in this function
-      require(unlocked, 'LOK');
 
       require(amountRequired != 0, 'AS');
       (cache.amountRequiredInitial, cache.exactInput) = (amountRequired, amountRequired > 0);
