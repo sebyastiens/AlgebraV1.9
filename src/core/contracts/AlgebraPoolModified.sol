@@ -101,39 +101,6 @@ contract AlgebraPool is PoolState, PoolImmutables, IAlgebraPool {
   }
 
 
-  /// @inheritdoc IAlgebraPoolActions
-  function swap(
-    address recipient,
-    bool zeroToOne,
-    int256 amountRequired,
-    uint160 limitSqrtPrice,
-    bytes calldata data
-  ) external override returns (int256 amount0, int256 amount1) {
-    uint160 currentPrice;
-    int24 currentTick;
-    uint128 currentLiquidity;
-    (amount0, amount1, currentPrice, currentTick, currentLiquidity) = _calculateSwapAndLock(zeroToOne, amountRequired, limitSqrtPrice);
-  
-  }
-
-  /// @inheritdoc IAlgebraPoolActions
-  function swapSupportingFeeOnInputTokens(
-    address sender,
-    address recipient,
-    bool zeroToOne,
-    int256 amountRequired,
-    uint160 limitSqrtPrice,
-    bytes calldata data
-  ) external override returns (int256 amount0, int256 amount1) {
-    // Since the pool can get less tokens then sent, firstly we are getting tokens from the
-    // original caller of the transaction. And change the _amountRequired_
-  
-    uint160 currentPrice;
-    int24 currentTick;
-    uint128 currentLiquidity;
-    (amount0, amount1, currentPrice, currentTick, currentLiquidity) = _calculateSwapAndLock(zeroToOne, amountRequired, limitSqrtPrice);
-
-  }
 
   struct SwapCalculationCache {
     uint128 volumePerLiquidityInBlock;
@@ -158,18 +125,19 @@ contract AlgebraPool is PoolState, PoolImmutables, IAlgebraPool {
     uint256 feeAmount; // The total amount of fee earned within a current step
   }
 
-  function _calculateSwapAndLock(
-    bool zeroToOne,
-    int256 amountRequired,
-    uint160 limitSqrtPrice
-  )
+struct RangeDatas {
+  int24 tick;
+  uint256 MaxInjectable;
+  uint256 MaxReceived;
+  uint160 Price;
+  uint128 InRangeLiquidity;
+}
+
+  function GetMaxSwapTables()
     private
     returns (
-      int256 amount0,
-      int256 amount1,
-      uint160 currentPrice,
-      int24 currentTick,
-      uint128 currentLiquidity
+      RangeDatas[] Max_Injectable_Token0,
+      RangeDatas[] Max_Injectable_Token1
     )
   {
     uint32 blockTimestamp;
@@ -178,19 +146,16 @@ contract AlgebraPool is PoolState, PoolImmutables, IAlgebraPool {
       // load from one storage slot
       currentPrice = globalState.price;
       currentTick = globalState.tick;
-      cache.fee = zeroToOne ? globalState.feeZto : globalState.feeOtz;
-      cache.timepointIndex = globalState.timepointIndex;
+      cache.fee_zTo = globalState.feeZto ;
+      cache.fee_oTz = globalState.feeOtz;
 
-      require(amountRequired != 0, 'AS');
-      (cache.amountRequiredInitial, cache.exactInput) = (amountRequired, amountRequired > 0);
+      cache.timepointIndex = globalState.timepointIndex;
 
       (currentLiquidity, cache.volumePerLiquidityInBlock) = (liquidity, volumePerLiquidityInBlock);
 
       cache.startTick = currentTick;
 
       blockTimestamp = _blockTimestamp();
-
-      
 
       uint16 newTimepointIndex = _writeTimepoint(
         cache.timepointIndex,
@@ -204,16 +169,14 @@ contract AlgebraPool is PoolState, PoolImmutables, IAlgebraPool {
       if (newTimepointIndex != cache.timepointIndex) {
         cache.timepointIndex = newTimepointIndex;
         cache.volumePerLiquidityInBlock = 0;
-        if (zeroToOne) {
-          (cache.fee, ) = _updateFee(blockTimestamp, currentTick, newTimepointIndex, currentLiquidity);
-        } else {
-          (, cache.fee) = _updateFee(blockTimestamp, currentTick, newTimepointIndex, currentLiquidity);
-        }
+        cache.fee_zTo = _updateFee(blockTimestamp, currentTick, newTimepointIndex, currentLiquidity);
+        cache.fee_oTz = _updateFee(blockTimestamp, currentTick, newTimepointIndex, currentLiquidity);
       }
     }
 
     PriceMovementCache memory step;
     // swap until there is remaining input or output tokens or we reach the price limit
+
     while (true) {
       step.stepSqrtPrice = currentPrice;
 
