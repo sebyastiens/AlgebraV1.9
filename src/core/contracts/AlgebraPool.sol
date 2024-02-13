@@ -3,7 +3,6 @@ pragma solidity =0.7.6;
 
 import './interfaces/IAlgebraPool.sol';
 import './interfaces/IDataStorageOperator.sol';
-import './interfaces/IAlgebraVirtualPool.sol';
 
 import './base/PoolState.sol';
 import './base/PoolImmutables.sol';
@@ -150,7 +149,6 @@ contract AlgebraPool is PoolState, PoolImmutables, IAlgebraPool {
     bool computedLatestTimepoint; //  if we have already fetched _tickCumulative_ and _secondPerLiquidity_ from the DataOperator
     int256 amountRequiredInitial; // The initial value of the exact input\output amount
     int256 amountCalculated; // The additive amount of total output\input calculated trough the swap
-    IAlgebraVirtualPool.Status incentiveStatus; // If there is an active incentive at the moment
     bool exactInput; // Whether the exact input or output is specified
     uint16 fee; // The current dynamic fee
     int24 startTick; // The tick at the start of a swap
@@ -205,16 +203,7 @@ contract AlgebraPool is PoolState, PoolImmutables, IAlgebraPool {
 
       blockTimestamp = _blockTimestamp();
 
-      if (activeIncentive != address(0)) {
-        IAlgebraVirtualPool.Status _status = IAlgebraVirtualPool(activeIncentive).increaseCumulative(blockTimestamp);
-        if (_status == IAlgebraVirtualPool.Status.NOT_EXIST) {
-          activeIncentive = address(0);
-        } else if (_status == IAlgebraVirtualPool.Status.ACTIVE) {
-          cache.incentiveStatus = IAlgebraVirtualPool.Status.ACTIVE;
-        } else if (_status == IAlgebraVirtualPool.Status.NOT_STARTED) {
-          cache.incentiveStatus = IAlgebraVirtualPool.Status.NOT_STARTED;
-        }
-      }
+      
 
       uint16 newTimepointIndex = _writeTimepoint(
         cache.timepointIndex,
@@ -279,10 +268,7 @@ contract AlgebraPool is PoolState, PoolImmutables, IAlgebraPool {
             );
             cache.computedLatestTimepoint = true;
           }
-          // every tick cross is needed to be duplicated in a virtual pool
-          if (cache.incentiveStatus != IAlgebraVirtualPool.Status.NOT_EXIST) {
-            IAlgebraVirtualPool(activeIncentive).cross(step.nextTick, zeroToOne);
-          }
+         
           int128 liquidityDelta;
           if (zeroToOne) {
             liquidityDelta = -ticks.cross(
