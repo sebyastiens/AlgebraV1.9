@@ -123,15 +123,7 @@ contract AlgebraPool is PoolState, PoolImmutables, IAlgebraPool {
     uint256 feeAmount; // The total amount of fee earned within a current step
   }
 
-struct RangeDatas {
-  int24 tick;
-  uint256 MaxInjectable;
-  uint256 MaxReceived;
-  uint160 Price;
-  uint128 InRangeLiquidity;
-}
-
-    function setPool (address _algebraPoolAddress, uint256 LoopLength) external returns (
+    function setPool (address _algebraPoolAddress, uint256 LoopLength) external override returns (
       RangeDatas[] Max_Injectable_Token0,
       RangeDatas[] Max_Injectable_Token1
     ){
@@ -139,7 +131,7 @@ struct RangeDatas {
     }
 
   function GetMaxSwapTables(uint256 LoopLength)
-    private
+    private override
     returns (
       RangeDatas[] Max_Injectable_Token0,
       RangeDatas[] Max_Injectable_Token1
