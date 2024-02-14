@@ -3,6 +3,7 @@ pragma solidity =0.7.6;
 
 import './interfaces/IAlgebraPool.sol';
 import './interfaces/IDataStorageOperator.sol';
+import './interfaces/pool/IAlgebraPoolState.sol';
 
 import './base/PoolState.sol';
 import './base/PoolImmutables.sol';
@@ -67,8 +68,6 @@ contract AlgebraPool is PoolState, PoolImmutables, IAlgebraPool {
   ) private returns (uint16 newFeeZto, uint16 newFeeOtz) {
     (newFeeZto, newFeeOtz) = IDataStorageOperator(dataStorageOperator).getFees(_time, _tick, _index, _liquidity);
     (globalState.feeZto, globalState.feeOtz) = (newFeeZto, newFeeOtz);
-
-    emit Fee(newFeeZto, newFeeOtz);
   }
 
   function _writeTimepoint(
@@ -109,8 +108,7 @@ contract AlgebraPool is PoolState, PoolImmutables, IAlgebraPool {
     bool computedLatestTimepoint; //  if we have already fetched _tickCumulative_ and _secondPerLiquidity_ from the DataOperator
     int256 amountRequiredInitial; // The initial value of the exact input\output amount
     int256 amountCalculated; // The additive amount of total output\input calculated trough the swap
-    bool exactInput; // Whether the exact input or output is specified
-    uint16 fee; // The current dynamic fee
+    uint16 fee; // The current dynamic fee when zeroToOne is true -> swapping token0 for token1
     int24 startTick; // The tick at the start of a swap
     uint16 timepointIndex; // The index of last written timepoint
   }
@@ -133,26 +131,35 @@ struct RangeDatas {
   uint128 InRangeLiquidity;
 }
 
-  function GetMaxSwapTables()
+    function setPool (address _algebraPoolAddress, uint256 LoopLength) external returns (
+      RangeDatas[] Max_Injectable_Token0,
+      RangeDatas[] Max_Injectable_Token1
+    ){
+       (Max_Injectable_Token0 , Max_Injectable_Token1) = IAlgebraPoolState(_algebraPoolAddress).GetMaxSwapTables(LoopLength);
+    }
+
+  function GetMaxSwapTables(uint256 LoopLength)
     private
     returns (
       RangeDatas[] Max_Injectable_Token0,
       RangeDatas[] Max_Injectable_Token1
     )
   {
+
     uint32 blockTimestamp;
     SwapCalculationCache memory cache;
+    RangeDatas memory currentRangeData;
+    int24 currentLiquidity;
+    bool Initialization_oTz = false ; // this will turn true after doing the initialization for oTz and used as the condition in the while loop to break the process
     {
       // load from one storage slot
-      currentPrice = globalState.price;
-      currentTick = globalState.tick;
-      cache.fee_zTo = globalState.feeZto ;
-      cache.fee_oTz = globalState.feeOtz;
+      bool zeroToOne = true ;
+      uint160 currentPrice = globalState.price;
+      int24 currentTick = globalState.tick;
+      cache.fee = globalState.feeZto;
 
       cache.timepointIndex = globalState.timepointIndex;
-
-      (currentLiquidity, cache.volumePerLiquidityInBlock) = (liquidity, volumePerLiquidityInBlock);
-
+      (currentLiquidity, cache.volumePerLiquidityInBlock) = (liquidity, volumePerLiquidityInBlock); // liquidity comes from AlgebraPoolState
       cache.startTick = currentTick;
 
       blockTimestamp = _blockTimestamp();
@@ -169,43 +176,33 @@ struct RangeDatas {
       if (newTimepointIndex != cache.timepointIndex) {
         cache.timepointIndex = newTimepointIndex;
         cache.volumePerLiquidityInBlock = 0;
-        cache.fee_zTo = _updateFee(blockTimestamp, currentTick, newTimepointIndex, currentLiquidity);
-        cache.fee_oTz = _updateFee(blockTimestamp, currentTick, newTimepointIndex, currentLiquidity);
+        (cache.fee, ) = _updateFee(blockTimestamp, currentTick, newTimepointIndex, currentLiquidity);
       }
     }
 
     PriceMovementCache memory step;
     // swap until there is remaining input or output tokens or we reach the price limit
-
-    while (true) {
+    uint256 i = 0 ;
+    while (i<LoopLength) {
       step.stepSqrtPrice = currentPrice;
-
       (step.nextTick, step.initialized) = tickTable.nextTickInTheSameRow(currentTick, zeroToOne);
-
       step.nextTickPrice = TickMath.getSqrtRatioAtTick(step.nextTick);
 
-      // calculate the amounts needed to move the price to the next target if it is possible or as much as possible
       (currentPrice, step.input, step.output, step.feeAmount) = PriceMovementMath.movePriceTowardsTarget(
         zeroToOne,
         currentPrice,
-        (zeroToOne == (step.nextTickPrice < limitSqrtPrice)) // move the price to the target or to the limit
-          ? limitSqrtPrice
-          : step.nextTickPrice,
+        step.nextTickPrice,
         currentLiquidity,
-        amountRequired,
         cache.fee
       );
 
-      if (cache.exactInput) {
-        amountRequired -= (step.input + step.feeAmount).toInt256(); // decrease remaining input amount
-        cache.amountCalculated = cache.amountCalculated.sub(step.output.toInt256()); // decrease calculated output amount
-      } else {
-        amountRequired += step.output.toInt256(); // increase remaining output amount (since its negative)
-        cache.amountCalculated = cache.amountCalculated.add((step.input + step.feeAmount).toInt256()); // increase calculated input amount
-      }
+        currentRangeData.tick = currentTick;
+        currentRangeData.MaxInjectable = step.input + step.feeAmount;
+        currentRangeData.MaxReceived = step.output; 
+        currentRangeData.Price = step.nextTickPrice;
+        currentRangeData.InRangeLiquidity = currentLiquidity;
 
-      if (currentPrice == step.nextTickPrice) {
-        // if the reached tick is initialized then we need to cross it
+           
         if (step.initialized) {
           // once at a swap we have to get the last timepoint of the observation
           if (!cache.computedLatestTimepoint) {
@@ -244,28 +241,42 @@ struct RangeDatas {
         }
 
         currentTick = zeroToOne ? step.nextTick - 1 : step.nextTick;
-      } else if (currentPrice != step.stepSqrtPrice) {
-        // if the price has changed but hasn't reached the target
-        currentTick = TickMath.getTickAtSqrtRatio(currentPrice);
-        break; // since the price hasn't reached the target, amountRequired should be 0
-      }
-
+        zeroToOne
+        ? Max_Injectable_Token0.push(currentRangeData)
+        : Max_Injectable_Token1.push(currentRangeData)
       // check stop condition
-      if (amountRequired == 0 || currentPrice == limitSqrtPrice) {
-        break;
+      if (i == LoopLength-1) {
+        if (Initialization_oTz == true) {break;} // it means we are done
+        // on prepare pour la loop a nouveau avec zeroToOne = false
+        i = 0 ;
+        cache = SwapCalculationCache(); // on les clean
+        step = PriceMovementCache(); // on les clean
+        zeroToOne = false;
+        cache.fee = globalState.feeOtz;
+        currentPrice = globalState.price;
+        currentTick = globalState.tick;
+        cache.timepointIndex = globalState.timepointIndex;
+        (currentLiquidity, cache.volumePerLiquidityInBlock) = (liquidity, volumePerLiquidityInBlock); // liquidity comes from AlgebraPoolState
+        cache.startTick = currentTick;
+
+        blockTimestamp = _blockTimestamp();
+  
+        uint16 newTimepointIndex = _writeTimepoint(
+          cache.timepointIndex,
+          blockTimestamp,
+          cache.startTick,
+          currentLiquidity,
+          cache.volumePerLiquidityInBlock
+        );
+
+        // new timepoint appears only for first swap in block
+        if (newTimepointIndex != cache.timepointIndex) {
+          cache.timepointIndex = newTimepointIndex;
+          cache.volumePerLiquidityInBlock = 0;
+          (, cache.fee) = _updateFee(blockTimestamp, currentTick, newTimepointIndex, currentLiquidity);
+        }
+        Initialization_oTz = true ;
       }
     }
-
-    (amount0, amount1) = zeroToOne == cache.exactInput // the amount to provide could be less then initially specified (e.g. reached limit)
-      ? (cache.amountRequiredInitial - amountRequired, cache.amountCalculated) // the amount to get could be less then initially specified (e.g. reached limit)
-      : (cache.amountCalculated, cache.amountRequiredInitial - amountRequired);
-
-    (globalState.price, globalState.tick, globalState.timepointIndex) = (currentPrice, currentTick, cache.timepointIndex);
-
-    (liquidity, volumePerLiquidityInBlock) = (
-      currentLiquidity,
-      cache.volumePerLiquidityInBlock + IDataStorageOperator(dataStorageOperator).calculateVolumePerLiquidity(currentLiquidity, amount0, amount1)
-    );
-
   }
 }
