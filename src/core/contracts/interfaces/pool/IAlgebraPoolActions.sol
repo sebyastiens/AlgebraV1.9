@@ -101,20 +101,6 @@ interface IAlgebraPoolActions {
     bytes calldata data
   ) external returns (int256 amount0, int256 amount1);
 
-
-struct RangeDatas {
-  int24 tick;
-  uint256 MaxInjectable;
-  uint256 MaxReceived;
-  uint160 Price;
-  uint128 InRangeLiquidity;
-}
-
-function GetMaxSwapTables(
-    uint256 LoopLength
-  ) external returns (RangeDatas[] memory Max_Injectable_Token0,
-      RangeDatas[] memory Max_Injectable_Token1);
-
   /**
    * @notice Swap token0 for token1, or token1 for token0 (tokens that have fee on transfer)
    * @dev The caller of this method receives a callback in the form of I AlgebraSwapCallback# AlgebraSwapCallback
