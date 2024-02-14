@@ -243,7 +243,7 @@ struct RangeDatas {
         currentTick = zeroToOne ? step.nextTick - 1 : step.nextTick;
         zeroToOne
         ? Max_Injectable_Token0.push(currentRangeData)
-        : Max_Injectable_Token1.push(currentRangeData)
+        : Max_Injectable_Token1.push(currentRangeData);
       // check stop condition
       if (i == LoopLength-1) {
         if (Initialization_oTz == true) {break;} // it means we are done
