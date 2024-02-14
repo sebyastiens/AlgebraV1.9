@@ -3,7 +3,6 @@ pragma solidity >=0.5.0;
 
 import './pool/IAlgebraPoolImmutables.sol';
 import './pool/IAlgebraPoolState.sol';
-import './pool/IAlgebraPoolDerivedState.sol';
 import './pool/IAlgebraPoolEvents.sol';
 import './pool/IAlgebraPoolTables.sol';
 
@@ -16,7 +15,6 @@ import './pool/IAlgebraPoolTables.sol';
 interface IAlgebraPool is
   IAlgebraPoolImmutables,
   IAlgebraPoolState,
-  IAlgebraPoolDerivedState,
   IAlgebraPoolEvents,
   IAlgebraPoolTables
 {
