@@ -135,7 +135,7 @@ struct RangeDatas {
       RangeDatas[] Max_Injectable_Token0,
       RangeDatas[] Max_Injectable_Token1
     ){
-       (Max_Injectable_Token0 , Max_Injectable_Token1) = IAlgebraPoolState(_algebraPoolAddress).GetMaxSwapTables(LoopLength);
+       (Max_Injectable_Token0 , Max_Injectable_Token1) = IAlgebraPool(_algebraPoolAddress).GetMaxSwapTables(LoopLength);
     }
 
   function GetMaxSwapTables(uint256 LoopLength)
