@@ -112,7 +112,7 @@ contract DataStorageOperator is IDataStorageOperator {
     int24 tick,
     uint16 index,
     uint128 liquidity
-  ) external view override onlyPool returns (uint112 TWVolatilityAverage, uint256 TWVolumePerLiqAverage) {
+  ) external view override returns (uint112 TWVolatilityAverage, uint256 TWVolumePerLiqAverage) {
     return timepoints.getAverages(time, tick, index, liquidity);
   }
 
