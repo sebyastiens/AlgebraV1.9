@@ -26,9 +26,22 @@ interface IAlgebraPoolTables  {
     );
   function GetMaxSwapTables(uint256 LoopLength)
     external
-    returns (
-      RangeDatas[] memory Max_Injectable_Token0,
-      RangeDatas[] memory Max_Injectable_Token1
-    );
+    //returns (
+      //RangeDatas[] memory Max_Injectable_Token0,
+     // RangeDatas[] memory Max_Injectable_Token1
+   // )
+returns (
+      int24[] memory tick0,
+    uint256[] memory maxInjectable0,
+    uint256[] memory maxReceived0,
+    uint160[] memory price0,
+    uint128[] memory inRangeLiquidity0,
+    int24[] memory tick1,
+    uint256[] memory maxInjectable1,
+    uint256[] memory maxReceived1,
+    uint160[] memory price1,
+    uint128[] memory inRangeLiquidity1
+    )
+;
 
 }
