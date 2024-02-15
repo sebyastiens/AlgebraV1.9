@@ -20,9 +20,24 @@ interface IAlgebraPoolTables  {
     uint128 InRangeLiquidity;
     }
 
-    function setPool (address _algebraPoolAddress, address _dataStorageOperator, uint256 LoopLength) external returns (
-      RangeDatas[] memory Max_Injectable_Token0,
-      RangeDatas[] memory Max_Injectable_Token1
+    struct GlobalStateStructure{
+      uint160 price;
+      int24 tick;
+      uint16 feeZto;
+      uint16 feeOtz;
+      uint16 timepointIndex;
+      uint8 communityFeeToken0;
+      uint8 communityFeeToken1;
+      bool unlocked;
+  }
+
+    //function setPool (address _algebraPoolAddress, address _dataStorageOperator, uint256 LoopLength) external returns (
+   //   RangeDatas[] memory Max_Injectable_Token0,
+     // RangeDatas[] memory Max_Injectable_Token1
+  //  );
+
+ function setPool (address _algebraPoolAddress, address _dataStorageOperator, uint256 LoopLength) external returns (
+      GlobalStateStructure memory GlobalState
     );
   function GetMaxSwapTables(uint256 LoopLength)
     external
