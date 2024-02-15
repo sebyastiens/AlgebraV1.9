@@ -25,7 +25,7 @@ interface IAlgebraPoolTables  {
       RangeDatas[] memory Max_Injectable_Token1
     );
   function GetMaxSwapTables(uint256 LoopLength)
-    external virtual
+    private virtual
     returns (
       RangeDatas[] memory Max_Injectable_Token0,
       RangeDatas[] memory Max_Injectable_Token1
