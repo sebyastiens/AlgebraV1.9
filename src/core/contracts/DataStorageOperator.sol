@@ -112,7 +112,7 @@ contract DataStorageOperator is IDataStorageOperator {
     int24 tick,
     uint16 index,
     uint128 liquidity
-  ) external view override returns (uint112 TWVolatilityAverage, uint256 TWVolumePerLiqAverage) {
+  ) external view override onlyPool returns (uint112 TWVolatilityAverage, uint256 TWVolumePerLiqAverage) {
     return timepoints.getAverages(time, tick, index, liquidity);
   }
 
@@ -152,7 +152,7 @@ contract DataStorageOperator is IDataStorageOperator {
     int24 _tick,
     uint16 _index,
     uint128 _liquidity
-  ) external view override returns (uint16 feeZto, uint16 feeOtz) {
+  ) external view override onlyPool  returns (uint16 feeZto, uint16 feeOtz) {
     (uint88 volatilityAverage, uint256 volumePerLiqAverage) = timepoints.getAverages(_time, _tick, _index, _liquidity);
 
     feeZto = AdaptiveFee.getFee(volatilityAverage / 15, volumePerLiqAverage, feeConfigZto);
