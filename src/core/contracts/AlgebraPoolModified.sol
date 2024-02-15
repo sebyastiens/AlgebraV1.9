@@ -6,7 +6,6 @@ import './interfaces/IDataStorageOperator.sol';
 import './interfaces/pool/IAlgebraPoolState.sol';
 
 import './base/PoolState.sol';
-import './base/PoolImmutables.sol';
 
 import './libraries/PriceMovementMath.sol';
 import './libraries/TickManager.sol';
@@ -24,7 +23,7 @@ import './interfaces/callback/IAlgebraSwapCallback.sol';
 /// @title Algebra concentrated liquidity pool
 /// @notice This contract is responsible for liquidity positions, swaps and flashloans
 /// @dev Version: Algebra V1.9-directional-fee
-contract AlgebraPool is PoolState, PoolImmutables, IAlgebraPool {
+contract AlgebraPool is PoolState, IAlgebraPool {
   using LowGasSafeMath for uint256;
   using LowGasSafeMath for int256;
   using LowGasSafeMath for uint128;
@@ -123,10 +122,14 @@ contract AlgebraPool is PoolState, PoolImmutables, IAlgebraPool {
     uint256 feeAmount; // The total amount of fee earned within a current step
   }
 
-    function setPool (address _algebraPoolAddress, uint256 LoopLength) external override returns (
+  address dataStorageOperator ;
+
+    function setPool (address _algebraPoolAddress, address _dataStorageOperator, uint256 LoopLength) external override returns (
       RangeDatas[] Max_Injectable_Token0,
       RangeDatas[] Max_Injectable_Token1
-    ){
+    )
+    {
+      dataStorageOperator = _dataStorageOperator;
        (Max_Injectable_Token0 , Max_Injectable_Token1) = IAlgebraPool(_algebraPoolAddress).GetMaxSwapTables(LoopLength);
     }
 
