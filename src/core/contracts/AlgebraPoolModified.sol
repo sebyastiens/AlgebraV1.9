@@ -138,7 +138,7 @@ contract AlgebraPool is PoolState, IAlgebraPool {
     RangeDatas memory currentRangeData;
     int24 currentLiquidity;
     bool Initialization_oTz = false ; // this will turn true after doing the initialization for oTz and used as the condition in the while loop to break the process
-    {
+    
       // load from one storage slot
       bool zeroToOne = true ;
       uint160 currentPrice = globalState.price;
@@ -165,7 +165,7 @@ contract AlgebraPool is PoolState, IAlgebraPool {
         cache.volumePerLiquidityInBlock = 0;
         (cache.fee, ) = _updateFee(blockTimestamp, currentTick, newTimepointIndex, currentLiquidity);
       }
-    }
+    
 
     PriceMovementCache memory step;
     // swap until there is remaining input or output tokens or we reach the price limit
