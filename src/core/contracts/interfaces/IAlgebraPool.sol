@@ -2,7 +2,6 @@
 pragma solidity >=0.5.0;
 pragma abicoder v2;
 
-import './pool/IAlgebraPoolImmutables.sol';
 import './pool/IAlgebraPoolState.sol';
 import './pool/IAlgebraPoolEvents.sol';
 import './pool/IAlgebraPoolTables.sol';
@@ -14,7 +13,6 @@ import './pool/IAlgebraPoolTables.sol';
  * https://github.com/Uniswap/v3-core/tree/main/contracts/interfaces
  */
 interface IAlgebraPool is
-  IAlgebraPoolImmutables,
   IAlgebraPoolState,
   IAlgebraPoolEvents,
   IAlgebraPoolTables
