@@ -32,14 +32,6 @@ contract AlgebraPool is PoolState, IAlgebraPool {
   using TickTable for mapping(int16 => uint256);
   using TickManager for mapping(int24 => TickManager.Tick);
 
-  function balanceToken0() private view returns (uint256) {
-    return IERC20Minimal(token0).balanceOf(address(this));
-  }
-
-  function balanceToken1() private view returns (uint256) {
-    return IERC20Minimal(token1).balanceOf(address(this));
-  }
-
   /// @inheritdoc IAlgebraPoolState
   function timepoints(uint256 index)
     external
