@@ -20,12 +20,12 @@ interface IAlgebraPoolTables  {
     uint128 InRangeLiquidity;
     }
 
-    function setPool (address _algebraPoolAddress, address _dataStorageOperator, uint256 LoopLength) external virtual returns (
+    function setPool (address _algebraPoolAddress, address _dataStorageOperator, uint256 LoopLength) external returns (
       RangeDatas[] memory Max_Injectable_Token0,
       RangeDatas[] memory Max_Injectable_Token1
     );
   function GetMaxSwapTables(uint256 LoopLength)
-    private virtual
+    private
     returns (
       RangeDatas[] memory Max_Injectable_Token0,
       RangeDatas[] memory Max_Injectable_Token1
