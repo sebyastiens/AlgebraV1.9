@@ -2,7 +2,7 @@
 pragma solidity =0.7.6;
 
 import './FullMath.sol';
-import './interfaces/IAlgebraPool.sol';
+import '../interfaces/IAlgebraPool.sol';
 
 /// @title DataStorage
 /// @notice Provides price, liquidity, volatility data useful for a wide variety of system designs
