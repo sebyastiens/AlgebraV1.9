@@ -15,7 +15,7 @@ import './pool/IAlgebraPoolTables.sol';
 interface IAlgebraPool is
   IAlgebraPoolState,
   IAlgebraPoolEvents,
-  IAlgebraPoolTables,
+  IAlgebraPoolTables
 {
   // used only for combining interfaces
 }
