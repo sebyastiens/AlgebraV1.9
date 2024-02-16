@@ -7,6 +7,8 @@ import '../libraries/AdaptiveFee.sol';
 interface IDataStorageOperator {
   event FeeConfiguration(bool zto, AdaptiveFee.Configuration feeConfig);
 
+ function feeConfigZto() external view returns (AdaptiveFee.Configuration memory);
+ function feeConfigOtz() external view returns (AdaptiveFee.Configuration memory);
   /**
    * @notice Returns data belonging to a certain timepoint
    * @param index The index of timepoint in the array
