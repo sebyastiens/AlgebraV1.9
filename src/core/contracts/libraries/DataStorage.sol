@@ -139,7 +139,7 @@ library DataStorage {
   /// The result may be the same timepoint, or adjacent timepoints.
   /// @dev The answer must be contained in the array, used when the target is located within the stored timepoint
   /// boundaries: older than the most recent timepoint and younger, or the same age as, the oldest timepoint
-  /// @param IAlgebraPool(poolAddress).timepoints() The stored dataStorage array
+  /// @param poolAddress IAlgebraPool(poolAddress).timepoints() The stored dataStorage array
   /// @param time The current block.timestamp
   /// @param target The timestamp at which the reserved timepoint should be for
   /// @param lastIndex The index of the timepoint that was most recently written to the timepoints array
@@ -195,7 +195,7 @@ library DataStorage {
   /// 0 may be passed as `secondsAgo' to return the current cumulative values.
   /// If called with a timestamp falling between two timepoints, returns the counterfactual accumulator values
   /// at exactly the timestamp between the two timepoints.
-  /// @param IAlgebraPool(poolAddress).timepoints() The stored dataStorage array
+  /// @param poolAddress IAlgebraPool(poolAddress).timepoints() The stored dataStorage array
   /// @param time The current block timestamp
   /// @param secondsAgo The amount of time to look back, in seconds, at which point to return an timepoint
   /// @param tick The current tick
@@ -265,7 +265,7 @@ library DataStorage {
 
   /// @notice Returns the accumulator values as of each time seconds ago from the given time in the array of `secondsAgos`
   /// @dev Reverts if `secondsAgos` > oldest timepoint
-  /// @param IAlgebraPool(poolAddress).timepoints() The stored dataStorage array
+  /// @param poolAddress IAlgebraPool(poolAddress).timepoints() The stored dataStorage array
   /// @param time The current block.timestamp
   /// @param secondsAgos Each amount of time to look back, in seconds, at which point to return an timepoint
   /// @param tick The current tick
@@ -317,7 +317,7 @@ library DataStorage {
   }
 
   /// @notice Returns average volatility in the range from time-WINDOW to time
-  /// @param IAlgebraPool(poolAddress).timepoints() The stored dataStorage array
+  /// @param poolAddress IAlgebraPool(poolAddress).timepoints() The stored dataStorage array
   /// @param time The current block.timestamp
   /// @param tick The current tick
   /// @param index The index of the timepoint that was most recently written to the timepoints array
@@ -359,7 +359,7 @@ library DataStorage {
   }
 
   /// @notice Initialize the dataStorage array by writing the first slot. Called once for the lifecycle of the timepoints array
-  /// @param IAlgebraPool(poolAddress).timepoints() The stored dataStorage array
+  /// @param poolAddress IAlgebraPool(poolAddress).timepoints() The stored dataStorage array
   /// @param time The time of the dataStorage initialization, via block.timestamp truncated to uint32
   /// @param tick Initial tick
   function initialize(
@@ -375,7 +375,7 @@ library DataStorage {
 
   /// @notice Writes an dataStorage timepoint to the array
   /// @dev Writable at most once per block. Index represents the most recently written element. index must be tracked externally.
-  /// @param IAlgebraPool(poolAddress).timepoints() The stored dataStorage array
+  /// @param poolAddress IAlgebraPool(poolAddress).timepoints() The stored dataStorage array
   /// @param index The index of the timepoint that was most recently written to the timepoints array
   /// @param blockTimestamp The timestamp of the new timepoint
   /// @param tick The active tick at the time of the new timepoint
