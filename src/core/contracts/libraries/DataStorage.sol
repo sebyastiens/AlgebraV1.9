@@ -114,7 +114,7 @@ library DataStorage {
     int56 lastTickCumulative
   ) internal view returns (int256 avgTick,Timepoint[UINT16_MODULO] memory) {
     if(!self[oldestIndex].initialized){
-      self[oldestIndex] = IAlgebraPool(poolAddress).timepoints(oldestIndex);
+      self[oldestIndex] = UpdateSelf(poolAddress,oldestIndex);
     }
     uint32 oldestTimestamp = self[oldestIndex].blockTimestamp;
     int56 oldestTickCumulative =self[oldestIndex].tickCumulative;
@@ -123,7 +123,7 @@ library DataStorage {
       if (lteConsideringOverflow(lastTimestamp, time - WINDOW, time)) {
         index -= 1; // considering underflow
         if(!self[index].initialized){
-          self[index] = IAlgebraPool(poolAddress).timepoints(index);
+          self[index] = UpdateSelf(poolAddress,index);
         }
         Timepoint storage startTimepoint = self[index];
         avgTick = startTimepoint.initialized
@@ -169,7 +169,7 @@ library DataStorage {
 
     do {
       if(!self[uint16(current)].initialized){
-        self[uint16(current)] = IAlgebraPool(poolAddress).timepoints(uint16(current));
+        self[uint16(current)] = UpdateSelf(poolAddress,uint16(current));
       }
       beforeOrAt = self[uint16(current)]; // checking the "middle" point between the boundaries
       (bool initializedBefore, uint32 timestampBefore) = (beforeOrAt.initialized, beforeOrAt.blockTimestamp);
@@ -177,7 +177,7 @@ library DataStorage {
         if (lteConsideringOverflow(timestampBefore, target, time)) {
           // is current point before or at `target`?
           if(!self[uint16(current+1)].initialized){
-            self[uint16(current+1)] = IAlgebraPool(poolAddress).timepoints(uint16(current+1));
+            self[uint16(current+1)] = UpdateSelf(poolAddress,uint16(current+1));
           }
           atOrAfter = self[uint16(current+1)]; // checking the next point after "middle"
           (bool initializedAfter, uint32 timestampAfter) = (atOrAfter.initialized, atOrAfter.blockTimestamp);
@@ -234,7 +234,7 @@ library DataStorage {
 
     // if target is newer than last timepoint
     if(!self[index].initialized){
-      self[index] = IAlgebraPool(poolAddress).timepoints(index);
+      self[index] = UpdateSelf(poolAddress,index);
     }
     if (secondsAgo == 0 || lteConsideringOverflow(self[index].blockTimestamp, target, time)) {
       Timepoint memory last = self[index];
@@ -250,7 +250,7 @@ library DataStorage {
           if (index != oldestIndex) {
             Timepoint memory prevLast;
             if(!self[index-1].initialized){
-              self[index-1] = IAlgebraPool(poolAddress).timepoints(index-1);
+              self[index-1] = UpdateSelf(poolAddress,index-1);
             }
             Timepoint storage _prevLast = self[index-1]; // considering index underflow
             
@@ -263,7 +263,7 @@ library DataStorage {
       }
     }
     if(!self[oldestIndex].initialized){
-      self[oldestIndex] = IAlgebraPool(poolAddress).timepoints(oldestIndex);
+      self[oldestIndex] = UpdateSelf(poolAddress,oldestIndex);
     }
     require(lteConsideringOverflow(self[oldestIndex].blockTimestamp, target, time), 'OLD');
     (Timepoint memory beforeOrAt, Timepoint memory atOrAfter) = binarySearch(self,poolAddress, time, target, index, oldestIndex);
@@ -333,7 +333,7 @@ library DataStorage {
     // check if we have overflow in the past
     uint16 nextIndex = index + 1; // considering overflow
     if(!self[nextIndex].initialized){
-          self[nextIndex] = IAlgebraPool(poolAddress).timepoints(nextIndex);
+      self[nextIndex] = UpdateSelf(poolAddress,nextIndex);
     }
     if (self[nextIndex].initialized) {
       oldestIndex = nextIndex;
@@ -371,12 +371,12 @@ library DataStorage {
   ) internal view returns (uint88 volatilityAverage, uint256 volumePerLiqAverage,Timepoint[UINT16_MODULO] memory) {
     uint16 oldestIndex;
     if(!self[0].initialized){
-      self[0] = IAlgebraPool(poolAddress).timepoints(0);
+      self[0] = UpdateSelf(poolAddress,0);
     }
     Timepoint storage oldest = self[0];
     uint16 nextIndex = index + 1; // considering overflow
     if(!self[nextIndex].initialized){
-      self[nextIndex] = IAlgebraPool(poolAddress).timepoints(nextIndex);
+      self[nextIndex] = UpdateSelf(poolAddress,nextIndex);
     }
     if ( IAlgebraPool(poolAddress).timepoints(nextIndex).initialized) {
       oldest = IAlgebraPool(poolAddress).timepoints(nextIndex);
@@ -416,7 +416,7 @@ library DataStorage {
     int24 tick
   ) internal returns (Timepoint[UINT16_MODULO] memory) {
     if(!self[0].initialized){
-      self[0] = IAlgebraPool(poolAddress).timepoints(0);
+      self[0] = UpdateSelf(poolAddress,0);
     }
     require(!self[0].initialized);
     self[0].initialized = true;
@@ -445,7 +445,7 @@ library DataStorage {
     uint128 volumePerLiquidity
   ) internal returns (uint16 indexUpdated,Timepoint[UINT16_MODULO] memory) {
     if(!self[index].initialized){
-      self[index] = IAlgebraPool(poolAddress).timepoints(index);
+      self[index] = UpdateSelf(poolAddress,index);
     }
     Timepoint storage _last = self[index];
     // early return if we've already written an timepoint this block
@@ -460,7 +460,7 @@ library DataStorage {
     uint16 oldestIndex;
     // check if we have overflow in the past
     if(!self[indexUpdated].initialized){
-      self[indexUpdated] = IAlgebraPool(poolAddress).timepoints(indexUpdated);
+      self[indexUpdated] = UpdateSelf(poolAddress,indexUpdated);
     }
     if (self[indexUpdated].initialized) {
       oldestIndex = indexUpdated;
@@ -470,7 +470,7 @@ library DataStorage {
     int24 prevTick = tick;
     if (index != oldestIndex) {
       if(!self[index - 1].initialized){
-        self[index - 1] = IAlgebraPool(poolAddress).timepoints(index - 1);
+        self[index - 1] = UpdateSelf(poolAddress,index - 1);
       }
       Timepoint storage _prevLast = self[index - 1]; // considering index underflow
       uint32 _prevLastBlockTimestamp = _prevLast.blockTimestamp;
@@ -481,4 +481,16 @@ library DataStorage {
     self[indexUpdated] = createNewTimepoint(last, blockTimestamp, tick, prevTick, liquidity, avgTick, volumePerLiquidity);
     return (indexUpdated,self);
   }
+
+  function UpdateSelf(address poolAddress, uint16 index) private returns (Timepoint memory timepoint){
+    (bool initialized, uint32 blockTimestamp, int56 tickCumulative, uint160 secondsPerLiquidityCumulative, uint88 volatilityCumulative, int24 averageTick, uint144 volumePerLiquidityCumulative) = IAlgebraPool(poolAddress).timepoints(index);
+    timepoint.initialized = initialized;
+    timepoint.blockTimestamp = blockTimestamp;
+    timepoint.tickCumulative = tickCumulative;
+    timepoint.secondsPerLiquidityCumulative = secondsPerLiquidityCumulative;
+    timepoint.volatilityCumulative = volatilityCumulative;
+    timepoint.averageTick = averageTick;
+    timepoint.volumePerLiquidityCumulative = volumePerLiquidityCumulative;    
+  }
+
 }
