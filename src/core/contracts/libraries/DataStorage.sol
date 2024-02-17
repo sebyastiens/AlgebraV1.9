@@ -244,7 +244,6 @@ library DataStorage {
         return (last,self);
       } else {
         // otherwise, we need to add new timepoint
-        //int24 avgTick = int24(_getAverageTick(self,poolAddress, time, tick, index, oldestIndex, last.blockTimestamp, last.tickCumulative));
         (int256 rawAvgTick, Timepoint[UINT16_MODULO] memory updatedSelf) = _getAverageTick(self, poolAddress, time, tick, index, oldestIndex, last.blockTimestamp, last.tickCumulative);
         int24 avgTick = int24(rawAvgTick);
         self = updatedSelf; 
@@ -385,11 +384,13 @@ library DataStorage {
       oldestIndex = nextIndex;
     }
 
-    Timepoint memory endOfWindow = getSingleTimepoint(self,poolAddress, time, 0, tick, index, oldestIndex, liquidity);
+    Timepoint memory endOfWindow;
+     (endOfWindow, self)= getSingleTimepoint(self,poolAddress, time, 0, tick, index, oldestIndex, liquidity);
 
     uint32 oldestTimestamp = oldest.blockTimestamp;
     if (lteConsideringOverflow(oldestTimestamp, time - WINDOW, time)) {
-      Timepoint memory startOfWindow = getSingleTimepoint(self,poolAddress, time, WINDOW, tick, index, oldestIndex, liquidity);
+      Timepoint memory startOfWindow;
+    (startOfWindow, self) = getSingleTimepoint(self,poolAddress, time, WINDOW, tick, index, oldestIndex, liquidity);
       return (
         (endOfWindow.volatilityCumulative - startOfWindow.volatilityCumulative) / WINDOW,
         uint256(endOfWindow.volumePerLiquidityCumulative - startOfWindow.volumePerLiquidityCumulative) >> 57,
@@ -449,12 +450,11 @@ library DataStorage {
     if(!self[index].initialized){
       self[index] = UpdateSelf(poolAddress,index);
     }
-    Timepoint storage _last = self[index];
     // early return if we've already written an timepoint this block
-    if (_last.blockTimestamp == blockTimestamp) {
-      return index;
+    if (self[index].blockTimestamp == blockTimestamp) {
+      return (index,self);
     }
-    Timepoint memory last = _last;
+    Timepoint memory last = self[index];
 
     // get next index considering overflow
     indexUpdated = index + 1;
@@ -468,15 +468,16 @@ library DataStorage {
       oldestIndex = indexUpdated;
     }
 
-    int24 avgTick = int24(_getAverageTick(self,poolAddress, blockTimestamp, tick, index, oldestIndex, last.blockTimestamp, last.tickCumulative));
+    (int256 rawAvgTick, Timepoint[UINT16_MODULO] memory updatedSelf) = int24(_getAverageTick(self,poolAddress, blockTimestamp, tick, index, oldestIndex, last.blockTimestamp, last.tickCumulative));
+    int24 avgTick = int24(rawAvgTick);
+    self = updatedSelf; 
     int24 prevTick = tick;
     if (index != oldestIndex) {
       if(!self[index - 1].initialized){
         self[index - 1] = UpdateSelf(poolAddress,index - 1);
       }
-      Timepoint storage _prevLast = self[index - 1]; // considering index underflow
-      uint32 _prevLastBlockTimestamp = _prevLast.blockTimestamp;
-      int56 _prevLastTickCumulative = _prevLast.tickCumulative;
+      uint32 _prevLastBlockTimestamp = self[index - 1].blockTimestamp; // considering index underflow
+      int56 _prevLastTickCumulative = self[index - 1].tickCumulative;
       prevTick = int24((last.tickCumulative - _prevLastTickCumulative) / (last.blockTimestamp - _prevLastBlockTimestamp));
     }
 
