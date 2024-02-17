@@ -468,7 +468,7 @@ library DataStorage {
       oldestIndex = indexUpdated;
     }
 
-    (int256 rawAvgTick, Timepoint[UINT16_MODULO] memory updatedSelf) = int24(_getAverageTick(self,poolAddress, blockTimestamp, tick, index, oldestIndex, last.blockTimestamp, last.tickCumulative));
+    (int256 rawAvgTick, Timepoint[UINT16_MODULO] memory updatedSelf) = _getAverageTick(self,poolAddress, blockTimestamp, tick, index, oldestIndex, last.blockTimestamp, last.tickCumulative);
     int24 avgTick = int24(rawAvgTick);
     self = updatedSelf; 
     int24 prevTick = tick;
