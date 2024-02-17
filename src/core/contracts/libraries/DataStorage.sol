@@ -125,12 +125,12 @@ library DataStorage {
         if(!self[index].initialized){
           self[index] = UpdateSelf(poolAddress,index);
         }
-        Timepoint storage startTimepoint = self[index];
-        avgTick = startTimepoint.initialized
-          ? (lastTickCumulative - startTimepoint.tickCumulative) / (lastTimestamp - startTimepoint.blockTimestamp)
+        avgTick = self[index].initialized
+          ? (lastTickCumulative - self[index].tickCumulative) / (lastTimestamp - self[index].blockTimestamp)
           : tick;
       } else {
-        Timepoint memory startOfWindow = getSingleTimepoint(self,poolAddress, time, WINDOW, tick, index, oldestIndex, 0);
+        Timepoint memory startOfWindow;
+        (startOfWindow, self) = getSingleTimepoint(self,poolAddress, time, WINDOW, tick, index, oldestIndex, 0);
 
         //    current-WINDOW  last   current
         // _________*____________*_______*_
