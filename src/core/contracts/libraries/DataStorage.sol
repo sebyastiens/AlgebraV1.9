@@ -112,7 +112,7 @@ library DataStorage {
     uint16 oldestIndex,
     uint32 lastTimestamp,
     int56 lastTickCumulative
-  ) internal view returns (int256 avgTick) {
+  ) internal view returns (int256 avgTick,Timepoint[UINT16_MODULO] memory) {
     if(!self[oldestIndex].initialized){
       self[oldestIndex] = IAlgebraPool(poolAddress).timepoints(oldestIndex);
     }
@@ -140,6 +140,7 @@ library DataStorage {
     } else {
       avgTick = (lastTimestamp == oldestTimestamp) ? tick : (lastTickCumulative - oldestTickCumulative) / (lastTimestamp - oldestTimestamp);
     }
+    return (avgTick,self);
   }
 
   /// @notice Fetches the timepoints beforeOrAt and atOrAfter a target, i.e. where [beforeOrAt, atOrAfter] is satisfied.
@@ -228,7 +229,7 @@ library DataStorage {
     uint16 index,
     uint16 oldestIndex,
     uint128 liquidity
-  ) internal view returns (Timepoint memory targetTimepoint) {
+  ) internal view returns (Timepoint memory targetTimepoint,Timepoint[UINT16_MODULO] memory) {
     uint32 target = time - secondsAgo;
 
     // if target is newer than last timepoint
@@ -240,7 +241,7 @@ library DataStorage {
 
       
       if (last.blockTimestamp == target) {
-        return last;
+        return (last,self);
       } else {
         // otherwise, we need to add new timepoint
         int24 avgTick = int24(_getAverageTick(self,poolAddress, time, tick, index, oldestIndex, last.blockTimestamp, last.tickCumulative));
@@ -258,7 +259,7 @@ library DataStorage {
             prevTick = int24((last.tickCumulative - prevLast.tickCumulative) / (last.blockTimestamp - prevLast.blockTimestamp));
           }
         }
-        return createNewTimepoint(last, target, tick, prevTick, liquidity, avgTick, 0);
+        return (createNewTimepoint(last, target, tick, prevTick, liquidity, avgTick, 0),self);
       }
     }
     if(!self[oldestIndex].initialized){
@@ -268,7 +269,7 @@ library DataStorage {
     (Timepoint memory beforeOrAt, Timepoint memory atOrAfter) = binarySearch(self,poolAddress, time, target, index, oldestIndex);
 
     if (target == atOrAfter.blockTimestamp) {
-      return atOrAfter; // we're at the right boundary
+      return (atOrAfter,self); // we're at the right boundary
     }
 
     if (target != beforeOrAt.blockTimestamp) {
@@ -288,7 +289,7 @@ library DataStorage {
     }
 
     // we're at the left boundary or at the middle
-    return beforeOrAt;
+    return (beforeOrAt,self);
   }
 
   /// @notice Returns the accumulator values as of each time seconds ago from the given time in the array of `secondsAgos`
@@ -319,7 +320,8 @@ library DataStorage {
       int56[] memory tickCumulatives,
       uint160[] memory secondsPerLiquidityCumulatives,
       uint112[] memory volatilityCumulatives,
-      uint256[] memory volumePerAvgLiquiditys
+      uint256[] memory volumePerAvgLiquiditys,
+      Timepoint[UINT16_MODULO] memory
     )
   {
     tickCumulatives = new int56[](secondsAgos.length);
@@ -347,6 +349,7 @@ library DataStorage {
         current.volumePerLiquidityCumulative
       );
     }
+  return (tickCumulatives,secondsPerLiquidityCumulatives,volatilityCumulatives,volumePerAvgLiquiditys,self);
   }
 
   /// @notice Returns average volatility in the range from time-WINDOW to time
@@ -365,7 +368,7 @@ library DataStorage {
     int24 tick,
     uint16 index,
     uint128 liquidity
-  ) internal view returns (uint88 volatilityAverage, uint256 volumePerLiqAverage) {
+  ) internal view returns (uint88 volatilityAverage, uint256 volumePerLiqAverage,Timepoint[UINT16_MODULO] memory) {
     uint16 oldestIndex;
     if(!self[0].initialized){
       self[0] = IAlgebraPool(poolAddress).timepoints(0);
@@ -387,14 +390,16 @@ library DataStorage {
       Timepoint memory startOfWindow = getSingleTimepoint(self,poolAddress, time, WINDOW, tick, index, oldestIndex, liquidity);
       return (
         (endOfWindow.volatilityCumulative - startOfWindow.volatilityCumulative) / WINDOW,
-        uint256(endOfWindow.volumePerLiquidityCumulative - startOfWindow.volumePerLiquidityCumulative) >> 57
+        uint256(endOfWindow.volumePerLiquidityCumulative - startOfWindow.volumePerLiquidityCumulative) >> 57,
+        self
       );
     } else if (time != oldestTimestamp) {
       uint88 _oldestVolatilityCumulative = oldest.volatilityCumulative;
       uint144 _oldestVolumePerLiquidityCumulative = oldest.volumePerLiquidityCumulative;
       return (
         (endOfWindow.volatilityCumulative - _oldestVolatilityCumulative) / (time - oldestTimestamp),
-        uint256(endOfWindow.volumePerLiquidityCumulative - _oldestVolumePerLiquidityCumulative) >> 57
+        uint256(endOfWindow.volumePerLiquidityCumulative - _oldestVolumePerLiquidityCumulative) >> 57,
+        self
       );
     }
   }
@@ -409,7 +414,7 @@ library DataStorage {
     address poolAddress,
     uint32 time,
     int24 tick
-  ) internal {
+  ) internal returns (Timepoint[UINT16_MODULO] memory) {
     if(!self[0].initialized){
       self[0] = IAlgebraPool(poolAddress).timepoints(0);
     }
@@ -417,6 +422,7 @@ library DataStorage {
     self[0].initialized = true;
     self[0].blockTimestamp = time;
     self[0].averageTick = tick;
+    return self;
   }
 
   /// @notice Writes an dataStorage timepoint to the array
@@ -437,7 +443,7 @@ library DataStorage {
     int24 tick,
     uint128 liquidity,
     uint128 volumePerLiquidity
-  ) internal returns (uint16 indexUpdated) {
+  ) internal returns (uint16 indexUpdated,Timepoint[UINT16_MODULO] memory) {
     if(!self[index].initialized){
       self[index] = IAlgebraPool(poolAddress).timepoints(index);
     }
@@ -473,5 +479,6 @@ library DataStorage {
     }
 
     self[indexUpdated] = createNewTimepoint(last, blockTimestamp, tick, prevTick, liquidity, avgTick, volumePerLiquidity);
+    return (indexUpdated,self);
   }
 }
