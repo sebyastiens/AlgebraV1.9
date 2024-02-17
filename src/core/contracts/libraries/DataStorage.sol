@@ -156,7 +156,7 @@ library DataStorage {
   /// @return beforeOrAt The timepoint recorded before, or at, the target
   /// @return atOrAfter The timepoint recorded at, or after, the target
   function binarySearch(
-    Timepoint[UINT16_MODULO] memeory self,//avant storage
+    Timepoint[UINT16_MODULO] memory self,//avant storage
     address poolAddress,
     uint32 time,
     uint32 target,
