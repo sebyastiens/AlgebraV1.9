@@ -162,7 +162,7 @@ library DataStorage {
     uint32 target,
     uint16 lastIndex,
     uint16 oldestIndex
-  ) private view returns (Timepoint storage beforeOrAt, Timepoint storage atOrAfter) {
+  ) private view returns (Timepoint memory beforeOrAt, Timepoint memory atOrAfter) {
     uint256 left = oldestIndex; // oldest timepoint
     uint256 right = lastIndex >= oldestIndex ? lastIndex : lastIndex + UINT16_MODULO; // newest timepoint considering one index overflow
     uint256 current = (left + right) >> 1; // "middle" point between the boundaries
@@ -244,7 +244,10 @@ library DataStorage {
         return (last,self);
       } else {
         // otherwise, we need to add new timepoint
-        int24 avgTick = int24(_getAverageTick(self,poolAddress, time, tick, index, oldestIndex, last.blockTimestamp, last.tickCumulative));
+        //int24 avgTick = int24(_getAverageTick(self,poolAddress, time, tick, index, oldestIndex, last.blockTimestamp, last.tickCumulative));
+        (int256 rawAvgTick, Timepoint[UINT16_MODULO] memory updatedSelf) = _getAverageTick(self, poolAddress, time, tick, index, oldestIndex, last.blockTimestamp, last.tickCumulative);
+        int24 avgTick = int24(rawAvgTick);
+        self = updatedSelf; 
         int24 prevTick = tick;
         {
           if (index != oldestIndex) {
@@ -252,10 +255,9 @@ library DataStorage {
             if(!self[index-1].initialized){
               self[index-1] = UpdateSelf(poolAddress,index-1);
             }
-            Timepoint storage _prevLast = self[index-1]; // considering index underflow
             
-            prevLast.blockTimestamp = _prevLast.blockTimestamp;
-            prevLast.tickCumulative = _prevLast.tickCumulative;
+            prevLast.blockTimestamp = self[index-1].blockTimestamp;
+            prevLast.tickCumulative = self[index-1].tickCumulative;
             prevTick = int24((last.tickCumulative - prevLast.tickCumulative) / (last.blockTimestamp - prevLast.blockTimestamp));
           }
         }
@@ -341,7 +343,7 @@ library DataStorage {
 
     Timepoint memory current;
     for (uint256 i = 0; i < secondsAgos.length; i++) {
-      current = getSingleTimepoint(self,poolAddress, time, secondsAgos[i], tick, index, oldestIndex, liquidity);
+      (current,self) = getSingleTimepoint(self,poolAddress, time, secondsAgos[i], tick, index, oldestIndex, liquidity);
       (tickCumulatives[i], secondsPerLiquidityCumulatives[i], volatilityCumulatives[i], volumePerAvgLiquiditys[i]) = (
         current.tickCumulative,
         current.secondsPerLiquidityCumulative,
@@ -373,13 +375,13 @@ library DataStorage {
     if(!self[0].initialized){
       self[0] = UpdateSelf(poolAddress,0);
     }
-    Timepoint storage oldest = self[0];
+    Timepoint memory oldest = self[0];
     uint16 nextIndex = index + 1; // considering overflow
     if(!self[nextIndex].initialized){
       self[nextIndex] = UpdateSelf(poolAddress,nextIndex);
     }
-    if ( IAlgebraPool(poolAddress).timepoints(nextIndex).initialized) {
-      oldest = IAlgebraPool(poolAddress).timepoints(nextIndex);
+    if ( self[nextIndex].initialized) {
+      oldest = self[nextIndex];
       oldestIndex = nextIndex;
     }
 
