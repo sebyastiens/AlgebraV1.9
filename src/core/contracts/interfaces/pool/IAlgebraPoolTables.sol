@@ -31,13 +31,13 @@ interface IAlgebraPoolTables  {
       bool unlocked;
   }
 
-    function setPool (address _algebraPoolAddress, address _dataStorageOperator, uint256 LoopLength) external returns (
+    function setPool (address _algebraPoolAddress, uint256 LoopLength) external returns (
       RangeDatas[] memory Max_Injectable_Token0,
       RangeDatas[] memory Max_Injectable_Token1
     );
 
 
-  function GetMaxSwapTables(uint256 LoopLength)
+  function GetMaxSwapTables(uint256 LoopLength,address algebraPoolAddress)
     external
     returns (
       RangeDatas[] memory Max_Injectable_Token0,
