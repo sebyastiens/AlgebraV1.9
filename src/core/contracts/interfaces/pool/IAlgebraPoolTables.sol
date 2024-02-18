@@ -40,8 +40,8 @@ interface IAlgebraPoolTables  {
   function GetMaxSwapTables(uint256 LoopLength,address algebraPoolAddress)
     external view
     returns (
-      RangeDatas[15] memory Max_Injectable_Token0,
-      RangeDatas[15] memory Max_Injectable_Token1
+      RangeDatas[2] memory Max_Injectable_Token0,
+      RangeDatas[2] memory Max_Injectable_Token1
     )
 
 ;
