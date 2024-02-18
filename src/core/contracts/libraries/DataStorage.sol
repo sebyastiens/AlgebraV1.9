@@ -162,7 +162,7 @@ library DataStorage {
     uint32 target,
     uint16 lastIndex,
     uint16 oldestIndex
-  ) private pure returns (Timepoint memory beforeOrAt, Timepoint memory atOrAfter) {
+  ) private view returns (Timepoint memory beforeOrAt, Timepoint memory atOrAfter) {
     uint256 left = oldestIndex; // oldest timepoint
     uint256 right = lastIndex >= oldestIndex ? lastIndex : lastIndex + UINT16_MODULO; // newest timepoint considering one index overflow
     uint256 current = (left + right) >> 1; // "middle" point between the boundaries
@@ -417,7 +417,7 @@ library DataStorage {
     address poolAddress,
     uint32 time,
     int24 tick
-  ) internal pure returns (Timepoint[UINT16_MODULO] memory) {
+  ) internal view returns (Timepoint[UINT16_MODULO] memory) {
     if(!self[0].initialized){
       self[0] = UpdateSelf(poolAddress,0);
     }
