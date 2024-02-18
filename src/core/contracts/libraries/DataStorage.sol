@@ -156,6 +156,7 @@ library DataStorage {
   /// @return beforeOrAt The timepoint recorded before, or at, the target
   /// @return atOrAfter The timepoint recorded at, or after, the target
   function binarySearch(
+    Timepoint[UINT16_MODULO] memory self,
     address poolAddress,
     uint32 time,
     uint32 target,
@@ -266,7 +267,7 @@ library DataStorage {
       self[oldestIndex] = UpdateSelf(poolAddress,oldestIndex);
     }
     require(lteConsideringOverflow(self[oldestIndex].blockTimestamp, target, time), 'OLD');
-    (Timepoint memory beforeOrAt, Timepoint memory atOrAfter) = binarySearch(poolAddress, time, target, index, oldestIndex);
+    (Timepoint memory beforeOrAt, Timepoint memory atOrAfter) = binarySearch(self,poolAddress, time, target, index, oldestIndex);
 
     if (target == atOrAfter.blockTimestamp) {
       return (atOrAfter,self); // we're at the right boundary
