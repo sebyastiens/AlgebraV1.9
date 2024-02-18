@@ -156,13 +156,12 @@ library DataStorage {
   /// @return beforeOrAt The timepoint recorded before, or at, the target
   /// @return atOrAfter The timepoint recorded at, or after, the target
   function binarySearch(
-    Timepoint[UINT16_MODULO] memory self,//avant storage
     address poolAddress,
     uint32 time,
     uint32 target,
     uint16 lastIndex,
     uint16 oldestIndex
-  ) private view returns (Timepoint memory beforeOrAt, Timepoint memory atOrAfter) {
+  ) private pure returns (Timepoint memory beforeOrAt, Timepoint memory atOrAfter) {
     uint256 left = oldestIndex; // oldest timepoint
     uint256 right = lastIndex >= oldestIndex ? lastIndex : lastIndex + UINT16_MODULO; // newest timepoint considering one index overflow
     uint256 current = (left + right) >> 1; // "middle" point between the boundaries
@@ -267,7 +266,7 @@ library DataStorage {
       self[oldestIndex] = UpdateSelf(poolAddress,oldestIndex);
     }
     require(lteConsideringOverflow(self[oldestIndex].blockTimestamp, target, time), 'OLD');
-    (Timepoint memory beforeOrAt, Timepoint memory atOrAfter) = binarySearch(self,poolAddress, time, target, index, oldestIndex);
+    (Timepoint memory beforeOrAt, Timepoint memory atOrAfter) = binarySearch(poolAddress, time, target, index, oldestIndex);
 
     if (target == atOrAfter.blockTimestamp) {
       return (atOrAfter,self); // we're at the right boundary
@@ -417,7 +416,7 @@ library DataStorage {
     address poolAddress,
     uint32 time,
     int24 tick
-  ) internal returns (Timepoint[UINT16_MODULO] memory) {
+  ) internal pure returns (Timepoint[UINT16_MODULO] memory) {
     if(!self[0].initialized){
       self[0] = UpdateSelf(poolAddress,0);
     }
@@ -446,7 +445,7 @@ library DataStorage {
     int24 tick,
     uint128 liquidity,
     uint128 volumePerLiquidity
-  ) internal returns (uint16 indexUpdated,Timepoint[UINT16_MODULO] memory) {
+  ) internal view returns (uint16 indexUpdated,Timepoint[UINT16_MODULO] memory) {
     if(!self[index].initialized){
       self[index] = UpdateSelf(poolAddress,index);
     }
