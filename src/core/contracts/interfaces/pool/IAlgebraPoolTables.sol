@@ -47,35 +47,17 @@ interface IAlgebraPoolTables  {
     uint128 currentLiquidity;
   }
 
-  struct PriceMovementCache {
-    uint160 stepSqrtPrice; // The Q64.96 sqrt of the price at the start of the step
-    int24 nextTick; // The tick till the current step goes
-    bool initialized; // True if the _nextTick is initialized
-    uint160 nextTickPrice; // The Q64.96 sqrt of the price calculated from the _nextTick
-    uint256 input; // The additive amount of tokens that have been provided
-    uint256 output; // The additive amount of token that have been withdrawn
-    uint256 feeAmount; // The total amount of fee earned within a current step
-  }
-
-  struct StateValuesCache {
-    uint160 currentPrice;
-    int24 currentTick;
-    uint128 currentLiquidity;
-}
-
     function setPool (address _algebraPoolAddress, uint256 LoopLength) external returns (
       RangeDatas[] memory Max_Injectable_Token0,
       RangeDatas[] memory Max_Injectable_Token1
     );
 
 
-  function GetMaxSwapTables(uint256 index,address algebraPoolAddress,bool zeroForOne,SwapCalculationCache memory cache,PriceMovementCache memory step,StateValuesCache memory CurrentState,DataStorage.Timepoint[100] memory  timepointsMemory)
+  function GetMaxSwapTables(uint256 index,address algebraPoolAddress,bool zeroForOne,Cached memory cache,DataStorage.Timepoint[100] memory  timepointsMemory)
     external view 
     returns (
       RangeDatas memory,
-      SwapCalculationCache memory,
-      PriceMovementCache memory,
-      StateValuesCache memory,
+      Cached memory,
       DataStorage.Timepoint[100] memory
     )
 
