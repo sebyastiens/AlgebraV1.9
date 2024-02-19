@@ -9,7 +9,7 @@ pragma abicoder v2;
  * @dev Credit to Uniswap Labs under GPL-2.0-or-later license:
  * https://github.com/Uniswap/v3-core/tree/main/contracts/interfaces
  */
-import '../libraries/DataStorage.sol';
+import '.../libraries/DataStorage.sol';
 
 interface IAlgebraPoolTables  {
 
