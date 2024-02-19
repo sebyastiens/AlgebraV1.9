@@ -22,6 +22,15 @@ library DataStorage {
     uint144 volumePerLiquidityCumulative; // the gmean(volumes)/liquidity accumulator
   }
 
+  struct functionCallStruct {
+    address poolAddress;
+    uint16 index;
+    uint32 time;
+    int24 tick;
+    uint128 liquidity;
+    uint128 volumePerLiquidity;
+  }
+
   /// @notice Calculates volatility between two sequential timepoints with resampling to 1 sec frequency
   /// @param dt Timedelta between timepoints, must be within uint32 range
   /// @param tick0 The tick at the left timepoint, must be within int24 range
@@ -66,22 +75,19 @@ library DataStorage {
   /// @return Timepoint The newly populated timepoint
   function createNewTimepoint(
     Timepoint memory last,
-    uint32 blockTimestamp,
-    int24 tick,
     int24 prevTick,
-    uint128 liquidity,
     int24 averageTick,
-    uint128 volumePerLiquidity
+    functionCallStruct temp
   ) private pure returns (Timepoint memory) {
-    uint32 delta = blockTimestamp - last.blockTimestamp;
+    uint32 delta = temp.time - last.blockTimestamp;
 
     last.initialized = true;
-    last.blockTimestamp = blockTimestamp;
-    last.tickCumulative += int56(tick) * delta;
-    last.secondsPerLiquidityCumulative += ((uint160(delta) << 128) / (liquidity > 0 ? liquidity : 1)); // just timedelta if liquidity == 0
-    last.volatilityCumulative += uint88(_volatilityOnRange(delta, prevTick, tick, last.averageTick, averageTick)); // always fits 88 bits
+    last.blockTimestamp = temp.time;
+    last.tickCumulative += int56(temp.tick) * delta;
+    last.secondsPerLiquidityCumulative += ((uint160(delta) << 128) / (temp.liquidity > 0 ? temp.liquidity : 1)); // just timedelta if temp.liquidity == 0
+    last.volatilityCumulative += uint88(_volatilityOnRange(delta, prevTick, temp.tick, last.averageTick, averageTick)); // always fits 88 bits
     last.averageTick = averageTick;
-    last.volumePerLiquidityCumulative += volumePerLiquidity;
+    last.volumePerLiquidityCumulative += temp.volumePerLiquidity;
 
     return last;
   }
@@ -105,40 +111,37 @@ library DataStorage {
   /// returns int256 for fuzzy tests
   function _getAverageTick(
     Timepoint[UINT16_MODULO] memory self, //avant storage
-    address poolAddress,
-    uint32 time,
-    int24 tick,
-    uint16 index,
     uint16 oldestIndex,
     uint32 lastTimestamp,
-    int56 lastTickCumulative
+    int56 lastTickCumulative,
+    functionCallStruct temp
   ) internal view returns (int256 avgTick,Timepoint[UINT16_MODULO] memory) {
     if(!self[oldestIndex].initialized){
-      self[oldestIndex] = UpdateSelf(poolAddress,oldestIndex);
+      self[oldestIndex] = UpdateSelf(temp.poolAddress,oldestIndex);
     }
     uint32 oldestTimestamp = self[oldestIndex].blockTimestamp;
     int56 oldestTickCumulative =self[oldestIndex].tickCumulative;
 
-    if (lteConsideringOverflow(oldestTimestamp, time - WINDOW, time)) {
-      if (lteConsideringOverflow(lastTimestamp, time - WINDOW, time)) {
-        index -= 1; // considering underflow
-        if(!self[index].initialized){
-          self[index] = UpdateSelf(poolAddress,index);
+    if (lteConsideringOverflow(oldestTimestamp, temp.time - WINDOW, temp.time)) {
+      if (lteConsideringOverflow(lastTimestamp, temp.time - WINDOW, temp.time)) {
+        temp.index -= 1; // considering underflow
+        if(!self[temp.index].initialized){
+          self[temp.index] = UpdateSelf(temp.poolAddress,temp.index);
         }
-        avgTick = self[index].initialized
-          ? (lastTickCumulative - self[index].tickCumulative) / (lastTimestamp - self[index].blockTimestamp)
-          : tick;
+        avgTick = self[temp.index].initialized
+          ? (lastTickCumulative - self[temp.index].tickCumulative) / (lastTimestamp - self[temp.index].blockTimestamp)
+          : temp.tick;
       } else {
         Timepoint memory startOfWindow;
-        (startOfWindow, self) = getSingleTimepoint(self,poolAddress, time, WINDOW, tick, index, oldestIndex, 0);
+        (startOfWindow, self) = getSingleTimepoint(self, WINDOW, oldestIndex, temp);
 
         //    current-WINDOW  last   current
         // _________*____________*_______*_
         //           ||||||||||||
-        avgTick = (lastTickCumulative - startOfWindow.tickCumulative) / (lastTimestamp - time + WINDOW);
+        avgTick = (lastTickCumulative - startOfWindow.tickCumulative) / (lastTimestamp - temp.time + WINDOW);
       }
     } else {
-      avgTick = (lastTimestamp == oldestTimestamp) ? tick : (lastTickCumulative - oldestTickCumulative) / (lastTimestamp - oldestTimestamp);
+      avgTick = (lastTimestamp == oldestTimestamp) ? temp.tick : (lastTickCumulative - oldestTickCumulative) / (lastTimestamp - oldestTimestamp);
     }
     return (avgTick,self);
   }
@@ -222,52 +225,51 @@ library DataStorage {
   /// @return targetTimepoint desired timepoint or it's approximation
   function getSingleTimepoint(
     Timepoint[UINT16_MODULO] memory self, //avant storage
-    address poolAddress,
-    uint32 time,
     uint32 secondsAgo,
-    int24 tick,
-    uint16 index,
     uint16 oldestIndex,
-    uint128 liquidity
+    functionCallStruct temp
+
   ) internal view returns (Timepoint memory targetTimepoint,Timepoint[UINT16_MODULO] memory) {
-    uint32 target = time - secondsAgo;
+    uint32 target = temp.time - secondsAgo;
 
     // if target is newer than last timepoint
-    if(!self[index].initialized){
-      self[index] = UpdateSelf(poolAddress,index);
+    if(!self[temp.index].initialized){
+      self[temp.index] = UpdateSelf(temp.poolAddress,temp.index);
     }
-    if (secondsAgo == 0 || lteConsideringOverflow(self[index].blockTimestamp, target, time)) {
-      Timepoint memory last = self[index];
+    if (secondsAgo == 0 || lteConsideringOverflow(self[temp.index].blockTimestamp, target, temp.time)) {
+      Timepoint memory last = self[temp.index];
 
       
       if (last.blockTimestamp == target) {
         return (last,self);
       } else {
         // otherwise, we need to add new timepoint
-        (int256 rawAvgTick, Timepoint[UINT16_MODULO] memory updatedSelf) = _getAverageTick(self, poolAddress, time, tick, index, oldestIndex, last.blockTimestamp, last.tickCumulative);
+
+
+        (int256 rawAvgTick, Timepoint[UINT16_MODULO] memory updatedSelf) = _getAverageTick(self, oldestIndex, last.blockTimestamp, last.tickCumulative,temp);
         int24 avgTick = int24(rawAvgTick);
         self = updatedSelf; 
-        int24 prevTick = tick;
+        int24 prevTick = temp.tick;
         {
-          if (index != oldestIndex) {
+          if (temp.index != oldestIndex) {
             Timepoint memory prevLast;
-            if(!self[index-1].initialized){
-              self[index-1] = UpdateSelf(poolAddress,index-1);
+            if(!self[temp.index-1].initialized){
+              self[temp.index-1] = UpdateSelf(temp.poolAddress,temp.index-1);
             }
             
-            prevLast.blockTimestamp = self[index-1].blockTimestamp;
-            prevLast.tickCumulative = self[index-1].tickCumulative;
+            prevLast.blockTimestamp = self[temp.index-1].blockTimestamp;
+            prevLast.tickCumulative = self[temp.index-1].tickCumulative;
             prevTick = int24((last.tickCumulative - prevLast.tickCumulative) / (last.blockTimestamp - prevLast.blockTimestamp));
           }
-        }
-        return (createNewTimepoint(last, target, tick, prevTick, liquidity, avgTick, 0),self);
+        } 
+        return (createNewTimepoint(last, prevTick, avgTick, temp),self);
       }
     }
     if(!self[oldestIndex].initialized){
-      self[oldestIndex] = UpdateSelf(poolAddress,oldestIndex);
+      self[oldestIndex] = UpdateSelf(temp.poolAddress,oldestIndex);
     }
-    require(lteConsideringOverflow(self[oldestIndex].blockTimestamp, target, time), 'OLD');
-    (Timepoint memory beforeOrAt, Timepoint memory atOrAfter) = binarySearch(self,poolAddress, time, target, index, oldestIndex);
+    require(lteConsideringOverflow(self[oldestIndex].blockTimestamp, target, temp.time), 'OLD');
+    (Timepoint memory beforeOrAt, Timepoint memory atOrAfter) = binarySearch(self,temp.poolAddress, temp.time, target, temp.index, oldestIndex);
 
     if (target == atOrAfter.blockTimestamp) {
       return (atOrAfter,self); // we're at the right boundary
@@ -304,43 +306,39 @@ library DataStorage {
   /// @return volumePerLiqAverage The average volume per liquidity in the recent range
   function getAverages(
     Timepoint[UINT16_MODULO] memory self, //avant storage
-    address poolAddress,
-    uint32 time,
-    int24 tick,
-    uint16 index,
-    uint128 liquidity
+    functionCallStruct temp
   ) internal view returns (uint88 volatilityAverage, uint256 volumePerLiqAverage,Timepoint[UINT16_MODULO] memory) {
     uint16 oldestIndex;
     if(!self[0].initialized){
-      self[0] = UpdateSelf(poolAddress,0);
+      self[0] = UpdateSelf(temp.poolAddress,0);
     }
     Timepoint memory oldest = self[0];
-    uint16 nextIndex = index + 1; // considering overflow
+    uint16 nextIndex = temp.index + 1; // considering overflow
     if(!self[nextIndex].initialized){
-      self[nextIndex] = UpdateSelf(poolAddress,nextIndex);
+      self[nextIndex] = UpdateSelf(temp.poolAddress,nextIndex);
     }
     if ( self[nextIndex].initialized) {
       oldest = self[nextIndex];
       oldestIndex = nextIndex;
     }
-
+    
     Timepoint memory endOfWindow;
-     (endOfWindow, self)= getSingleTimepoint(self,poolAddress, time, 0, tick, index, oldestIndex, liquidity);
+     (endOfWindow, self)= getSingleTimepoint(self, 0, oldestIndex, temp);
 
     uint32 oldestTimestamp = oldest.blockTimestamp;
-    if (lteConsideringOverflow(oldestTimestamp, time - WINDOW, time)) {
+    if (lteConsideringOverflow(oldestTimestamp, temp.time - WINDOW, temp.time)) {
       Timepoint memory startOfWindow;
-    (startOfWindow, self) = getSingleTimepoint(self,poolAddress, time, WINDOW, tick, index, oldestIndex, liquidity);
+    (startOfWindow, self) = getSingleTimepoint(self, WINDOW, oldestIndex, temp);
       return (
         (endOfWindow.volatilityCumulative - startOfWindow.volatilityCumulative) / WINDOW,
         uint256(endOfWindow.volumePerLiquidityCumulative - startOfWindow.volumePerLiquidityCumulative) >> 57,
         self
       );
-    } else if (time != oldestTimestamp) {
+    } else if (temp.time != oldestTimestamp) {
       uint88 _oldestVolatilityCumulative = oldest.volatilityCumulative;
       uint144 _oldestVolumePerLiquidityCumulative = oldest.volumePerLiquidityCumulative;
       return (
-        (endOfWindow.volatilityCumulative - _oldestVolatilityCumulative) / (time - oldestTimestamp),
+        (endOfWindow.volatilityCumulative - _oldestVolatilityCumulative) / (temp.time - oldestTimestamp),
         uint256(endOfWindow.volumePerLiquidityCumulative - _oldestVolumePerLiquidityCumulative) >> 57,
         self
       );
@@ -361,53 +359,47 @@ library DataStorage {
   /// @return indexUpdated The new index of the most recently written element in the dataStorage array
   function write(
     Timepoint[UINT16_MODULO] memory self, //avant storage
-    address poolAddress,
-    uint16 index,
-    uint32 blockTimestamp,
-    int24 tick,
-    uint128 liquidity,
-    uint128 volumePerLiquidity
+    functionCallStruct temp
   ) internal view returns (uint16 indexUpdated,Timepoint[UINT16_MODULO] memory) {
-    if(!self[index].initialized){
-      self[index] = UpdateSelf(poolAddress,index);
+    if(!self[temp.index].initialized){
+      self[temp.index] = UpdateSelf(temp.poolAddress,temp.index);
     }
     // early return if we've already written an timepoint this block
-    if (self[index].blockTimestamp == blockTimestamp) {
-      return (index,self);
+    if (self[temp.index].blockTimestamp == temp.blockTimestamp) {
+      return (temp.index,self);
     }
-    Timepoint memory last = self[index];
+    Timepoint memory last = self[temp.index];
 
     // get next index considering overflow
-    indexUpdated = index + 1;
+    indexUpdated = temp.index + 1;
 
     uint16 oldestIndex;
     // check if we have overflow in the past
     if(!self[indexUpdated].initialized){
-      self[indexUpdated] = UpdateSelf(poolAddress,indexUpdated);
+      self[indexUpdated] = UpdateSelf(temp.poolAddress,indexUpdated);
     }
     if (self[indexUpdated].initialized) {
       oldestIndex = indexUpdated;
     }
 
-    (int256 rawAvgTick, Timepoint[UINT16_MODULO] memory updatedSelf) = _getAverageTick(self,poolAddress, blockTimestamp, tick, index, oldestIndex, last.blockTimestamp, last.tickCumulative);
+    (int256 rawAvgTick, Timepoint[UINT16_MODULO] memory updatedSelf) = _getAverageTick(self,oldestIndex, last.blockTimestamp, last.tickCumulative,temp);
     int24 avgTick = int24(rawAvgTick);
     self = updatedSelf; 
-    int24 prevTick = tick;
-    if (index != oldestIndex) {
-      if(!self[index - 1].initialized){
-        self[index - 1] = UpdateSelf(poolAddress,index - 1);
+    int24 prevTick = temp.tick;
+    if (temp.index != oldestIndex) {
+      if(!self[temp.index - 1].initialized){
+        self[temp.index - 1] = UpdateSelf(temp.poolAddress,temp.index - 1);
       }
-      uint32 _prevLastBlockTimestamp = self[index - 1].blockTimestamp; // considering index underflow
-      int56 _prevLastTickCumulative = self[index - 1].tickCumulative;
+      uint32 _prevLastBlockTimestamp = self[temp.index - 1].blockTimestamp; // considering index underflow
+      int56 _prevLastTickCumulative = self[temp.index - 1].tickCumulative;
       prevTick = int24((last.tickCumulative - _prevLastTickCumulative) / (last.blockTimestamp - _prevLastBlockTimestamp));
     }
-
-    self[indexUpdated] = createNewTimepoint(last, blockTimestamp, tick, prevTick, liquidity, avgTick, volumePerLiquidity);
+    self[indexUpdated] = createNewTimepoint(last prevTick, avgTick, temp);
     return (indexUpdated,self);
   }
 
   function UpdateSelf(address poolAddress, uint16 index) internal view returns (Timepoint memory timepoint){
-    (bool initialized, uint32 blockTimestamp, int56 tickCumulative, uint160 secondsPerLiquidityCumulative, uint88 volatilityCumulative, int24 averageTick, uint144 volumePerLiquidityCumulative) = IAlgebraPool(poolAddress).timepoints(index);
+    (bool initialized, uint32 blockTimestamp, int56 tickCumulative, uint160 secondsPerLiquidityCumulative, uint88 volatilityCumulative, int24 averageTick, uint144 volumePerLiquidityCumulative) = IAlgebraPool(temp.poolAddress).timepoints(index);
     timepoint.initialized = initialized;
     timepoint.blockTimestamp = blockTimestamp;
     timepoint.tickCumulative = tickCumulative;
