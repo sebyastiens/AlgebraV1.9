@@ -58,7 +58,7 @@ interface IAlgebraPoolTables  {
 
 
   function GetMaxSwapTables(uint256 index,address algebraPoolAddress,bool zeroForOne,SwapCalculationCache memory cache,PriceMovementCache memory step,StateValuesCache memory CurrentState,DataStorage.Timepoint[UINT16_MODULO] memory  timepointsMemory)
-    external view override 
+    external view 
     returns (
       RangeDatas memory,
       SwapCalculationCache memory,
