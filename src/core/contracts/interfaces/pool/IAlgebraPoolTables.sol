@@ -22,7 +22,7 @@ interface IAlgebraPoolTables  {
     uint128 InRangeLiquidity;
     }
 
-     struct SwapCalculationCache {
+    struct Cached {
     uint128 volumePerLiquidityInBlock;
     int56 tickCumulative; // The global tickCumulative at the moment
     uint160 secondsPerLiquidityCumulative; // The global secondPerLiquidity at the moment
@@ -33,6 +33,18 @@ interface IAlgebraPoolTables  {
     int24 startTick; // The tick at the start of a swap
     uint16 timepointIndex; // The index of last written timepoint
     uint32 blockTimeStamp ; // time when the timepointIndex was created
+
+    uint160 stepSqrtPrice; // The Q64.96 sqrt of the price at the start of the step
+    int24 nextTick; // The tick till the current step goes
+    bool initialized; // True if the _nextTick is initialized
+    uint160 nextTickPrice; // The Q64.96 sqrt of the price calculated from the _nextTick
+    uint256 input; // The additive amount of tokens that have been provided
+    uint256 output; // The additive amount of token that have been withdrawn
+    uint256 feeAmount; // The total amount of fee earned within a current step
+
+    uint160 currentPrice;
+    int24 currentTick;
+    uint128 currentLiquidity;
   }
 
   struct PriceMovementCache {
