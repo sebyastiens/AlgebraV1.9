@@ -2,6 +2,11 @@
 pragma solidity >=0.5.0;
 pragma abicoder v2;
 
+
+library Constants {
+    uint256 constant UINT16_MODULO = 65536;
+}
+
 /**
  * @title Pool state that is not stored
  * @notice Contains view functions to provide information about the pool that is computed rather than stored on the
@@ -13,7 +18,6 @@ import "../../libraries/DataStorage.sol";
 
 
 interface IAlgebraPoolTables  {
-    uint256 constant UINT16_MODULO = 65536;
 
     struct RangeDatas {
     int24 tick;
