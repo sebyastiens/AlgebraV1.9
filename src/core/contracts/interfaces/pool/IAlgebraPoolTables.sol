@@ -9,6 +9,7 @@ pragma abicoder v2;
  * @dev Credit to Uniswap Labs under GPL-2.0-or-later license:
  * https://github.com/Uniswap/v3-core/tree/main/contracts/interfaces
  */
+import '../libraries/DataStorage.sol';
 
 interface IAlgebraPoolTables  {
 
@@ -20,28 +21,48 @@ interface IAlgebraPoolTables  {
     uint128 InRangeLiquidity;
     }
 
-    struct GlobalStateStructure{
-      uint160 price;
-      int24 tick;
-      uint16 feeZto;
-      uint16 feeOtz;
-      uint16 timepointIndex;
-      uint8 communityFeeToken0;
-      uint8 communityFeeToken1;
-      bool unlocked;
+     struct SwapCalculationCache {
+    uint128 volumePerLiquidityInBlock;
+    int56 tickCumulative; // The global tickCumulative at the moment
+    uint160 secondsPerLiquidityCumulative; // The global secondPerLiquidity at the moment
+    bool computedLatestTimepoint; //  if we have already fetched _tickCumulative_ and _secondPerLiquidity_ from the DataOperator
+    int256 amountRequiredInitial; // The initial value of the exact input\output amount
+    int256 amountCalculated; // The additive amount of total output\input calculated trough the swap
+    uint16 fee; // The current dynamic fee when zeroToOne is true -> swapping token0 for token1
+    int24 startTick; // The tick at the start of a swap
+    uint16 timepointIndex; // The index of last written timepoint
   }
 
-    //function setPool (address _algebraPoolAddress, uint256 LoopLength) external returns (
-     // RangeDatas[] memory Max_Injectable_Token0,
-     // RangeDatas[] memory Max_Injectable_Token1
-   // );
+  struct PriceMovementCache {
+    uint160 stepSqrtPrice; // The Q64.96 sqrt of the price at the start of the step
+    int24 nextTick; // The tick till the current step goes
+    bool initialized; // True if the _nextTick is initialized
+    uint160 nextTickPrice; // The Q64.96 sqrt of the price calculated from the _nextTick
+    uint256 input; // The additive amount of tokens that have been provided
+    uint256 output; // The additive amount of token that have been withdrawn
+    uint256 feeAmount; // The total amount of fee earned within a current step
+  }
+
+  struct StateValuesCache {
+    uint160 currentPrice;
+    int24 currentTick;
+    uint128 currentLiquidity;
+}
+
+    function setPool (address _algebraPoolAddress, uint256 LoopLength) external returns (
+      RangeDatas[] memory Max_Injectable_Token0,
+      RangeDatas[] memory Max_Injectable_Token1
+    );
 
 
-  function GetMaxSwapTables(uint256 LoopLength,address algebraPoolAddress)
-    external view
+  function GetMaxSwapTables(uint256 index,address algebraPoolAddress,bool zeroForOne,SwapCalculationCache memory cache,PriceMovementCache memory step,StateValuesCache memory CurrentState,DataStorage.Timepoint[UINT16_MODULO] memory  timepointsMemory)
+    external view override 
     returns (
-      RangeDatas[2] memory Max_Injectable_Token0,
-      RangeDatas[2] memory Max_Injectable_Token1
+      RangeDatas memory,
+      SwapCalculationCache memory,
+      PriceMovementCache memory,
+      StateValuesCache memory,
+      DataStorage.Timepoint[UINT16_MODULO] memory
     )
 
 ;
