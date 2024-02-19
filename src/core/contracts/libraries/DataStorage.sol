@@ -74,7 +74,7 @@ library DataStorage {
     Timepoint memory last,
     int24 prevTick,
     int24 averageTick,
-    functionCallStruct temp
+    functionCallStruct memory temp
   ) private pure returns (Timepoint memory) {
     uint32 delta = temp.time - last.blockTimestamp;
 
@@ -111,7 +111,7 @@ library DataStorage {
     uint16 oldestIndex,
     uint32 lastTimestamp,
     int56 lastTickCumulative,
-    functionCallStruct temp
+    functionCallStruct memory temp
   ) internal view returns (int256 avgTick,Timepoint[UINT16_MODULO] memory) {
     if(!self[oldestIndex].initialized){
       self[oldestIndex] = UpdateSelf(temp.poolAddress,oldestIndex);
@@ -220,7 +220,7 @@ library DataStorage {
     Timepoint[UINT16_MODULO] memory self, //avant storage
     uint32 secondsAgo,
     uint16 oldestIndex,
-    functionCallStruct temp
+    functionCallStruct memory temp
 
   ) internal view returns (Timepoint memory targetTimepoint,Timepoint[UINT16_MODULO] memory) {
     uint32 target = temp.time - secondsAgo;
@@ -290,13 +290,12 @@ library DataStorage {
 
   /// @notice Returns average volatility in the range from time-WINDOW to time
   /// @param self The memorized dataStorage array
-  /// @param poolAddress IAlgebraPool(poolAddress).timepoints() The accessible stored data
   /// @param temp the struct with all required params
   /// @return volatilityAverage The average volatility in the recent range
   /// @return volumePerLiqAverage The average volume per liquidity in the recent range
   function getAverages(
     Timepoint[UINT16_MODULO] memory self, //avant storage
-    functionCallStruct temp
+    functionCallStruct memory temp
   ) internal view returns (uint88 volatilityAverage, uint256 volumePerLiqAverage,Timepoint[UINT16_MODULO] memory) {
     uint16 oldestIndex;
     if(!self[0].initialized){
@@ -344,7 +343,7 @@ library DataStorage {
   /// @return indexUpdated The new index of the most recently written element in the dataStorage array
   function write(
     Timepoint[UINT16_MODULO] memory self, //avant storage
-    functionCallStruct temp
+    functionCallStruct memory temp
   ) internal view returns (uint16 indexUpdated,Timepoint[UINT16_MODULO] memory) {
     if(!self[temp.index].initialized){
       self[temp.index] = UpdateSelf(temp.poolAddress,temp.index);
