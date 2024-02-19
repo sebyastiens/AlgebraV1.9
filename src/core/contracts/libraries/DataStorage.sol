@@ -349,7 +349,7 @@ library DataStorage {
       self[temp.index] = UpdateSelf(temp.poolAddress,temp.index);
     }
     // early return if we've already written an timepoint this block
-    if (self[temp.index].blockTimestamp == temp.blockTimestamp) {
+    if (self[temp.index].blockTimestamp == temp.time) {
       return (temp.index,self);
     }
     Timepoint memory last = self[temp.index];
