@@ -11,7 +11,7 @@ import '../interfaces/IAlgebraPool.sol';
 /// The most recent timepoint is available by passing 0 to getSingleTimepoint()
 library DataStorage {
   uint32 public constant WINDOW = 1 days;
-  uint256 private constant UINT16_MODULO = 100;//65536
+  uint256 private constant UINT16_MODULO = 65536;//65536
   struct Timepoint {
     bool initialized; // whether or not the timepoint is initialized
     uint32 blockTimestamp; // the block timestamp of the timepoint
