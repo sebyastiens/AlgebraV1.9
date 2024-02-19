@@ -293,66 +293,6 @@ library DataStorage {
     return (beforeOrAt,self);
   }
 
-  /// @notice Returns the accumulator values as of each time seconds ago from the given time in the array of `secondsAgos`
-  /// @dev Reverts if `secondsAgos` > oldest timepoint
-  /// @param self The memorized dataStorage array
-  /// @param poolAddress IAlgebraPool(poolAddress).timepoints() The accessible stored data
-  /// @param time The current block.timestamp
-  /// @param secondsAgos Each amount of time to look back, in seconds, at which point to return an timepoint
-  /// @param tick The current tick
-  /// @param index The index of the timepoint that was most recently written to the timepoints array
-  /// @param liquidity The current in-range pool liquidity
-  /// @return tickCumulatives The tick * time elapsed since the pool was first initialized, as of each `secondsAgo`
-  /// @return secondsPerLiquidityCumulatives The cumulative seconds / max(1, liquidity) since the pool was first initialized, as of each `secondsAgo`
-  /// @return volatilityCumulatives The cumulative volatility values since the pool was first initialized, as of each `secondsAgo`
-  /// @return volumePerAvgLiquiditys The cumulative volume per liquidity values since the pool was first initialized, as of each `secondsAgo`
-  function getTimepoints(
-    Timepoint[UINT16_MODULO] memory self, //avant storage
-    address poolAddress,
-    uint32 time,
-    uint32[] memory secondsAgos,
-    int24 tick,
-    uint16 index,
-    uint128 liquidity
-  )
-    internal
-    view
-    returns (
-      int56[] memory tickCumulatives,
-      uint160[] memory secondsPerLiquidityCumulatives,
-      uint112[] memory volatilityCumulatives,
-      uint256[] memory volumePerAvgLiquiditys,
-      Timepoint[UINT16_MODULO] memory
-    )
-  {
-    tickCumulatives = new int56[](secondsAgos.length);
-    secondsPerLiquidityCumulatives = new uint160[](secondsAgos.length);
-    volatilityCumulatives = new uint112[](secondsAgos.length);
-    volumePerAvgLiquiditys = new uint256[](secondsAgos.length);
-
-    uint16 oldestIndex;
-    // check if we have overflow in the past
-    uint16 nextIndex = index + 1; // considering overflow
-    if(!self[nextIndex].initialized){
-      self[nextIndex] = UpdateSelf(poolAddress,nextIndex);
-    }
-    if (self[nextIndex].initialized) {
-      oldestIndex = nextIndex;
-    }
-
-    Timepoint memory current;
-    for (uint256 i = 0; i < secondsAgos.length; i++) {
-      (current,self) = getSingleTimepoint(self,poolAddress, time, secondsAgos[i], tick, index, oldestIndex, liquidity);
-      (tickCumulatives[i], secondsPerLiquidityCumulatives[i], volatilityCumulatives[i], volumePerAvgLiquiditys[i]) = (
-        current.tickCumulative,
-        current.secondsPerLiquidityCumulative,
-        current.volatilityCumulative,
-        current.volumePerLiquidityCumulative
-      );
-    }
-  return (tickCumulatives,secondsPerLiquidityCumulatives,volatilityCumulatives,volumePerAvgLiquiditys,self);
-  }
-
   /// @notice Returns average volatility in the range from time-WINDOW to time
   /// @param self The memorized dataStorage array
   /// @param poolAddress IAlgebraPool(poolAddress).timepoints() The accessible stored data
@@ -407,26 +347,7 @@ library DataStorage {
     }
   }
 
-  /// @notice Initialize the dataStorage array by writing the first slot. Called once for the lifecycle of the timepoints array
-  /// @param self The memorized dataStorage array
-  /// @param poolAddress IAlgebraPool(poolAddress).timepoints() The accessible stored data
-  /// @param time The time of the dataStorage initialization, via block.timestamp truncated to uint32
-  /// @param tick Initial tick
-  function initialize(
-    Timepoint[UINT16_MODULO] memory self, //avant storage
-    address poolAddress,
-    uint32 time,
-    int24 tick
-  ) internal view returns (Timepoint[UINT16_MODULO] memory) {
-    if(!self[0].initialized){
-      self[0] = UpdateSelf(poolAddress,0);
-    }
-    require(!self[0].initialized);
-    self[0].initialized = true;
-    self[0].blockTimestamp = time;
-    self[0].averageTick = tick;
-    return self;
-  }
+  
 
   /// @notice Writes an dataStorage timepoint to the array
   /// @dev Writable at most once per block. Index represents the most recently written element. index must be tracked externally.
