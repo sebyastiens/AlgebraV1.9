@@ -394,7 +394,7 @@ library DataStorage {
       int56 _prevLastTickCumulative = self[temp.index - 1].tickCumulative;
       prevTick = int24((last.tickCumulative - _prevLastTickCumulative) / (last.blockTimestamp - _prevLastBlockTimestamp));
     }
-    self[indexUpdated] = createNewTimepoint(last prevTick, avgTick, temp);
+    self[indexUpdated] = createNewTimepoint(last, prevTick, avgTick, temp);
     return (indexUpdated,self);
   }
 
