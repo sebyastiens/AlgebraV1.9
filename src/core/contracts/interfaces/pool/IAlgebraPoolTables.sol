@@ -11,8 +11,6 @@ pragma abicoder v2;
  * https://github.com/Uniswap/v3-core/tree/main/contracts/interfaces
  */
 import "../../libraries/DataStorage.sol";
-import "../../libraries/Constants.sol";
-
 
 interface IAlgebraPoolTables  {
 
@@ -58,14 +56,14 @@ interface IAlgebraPoolTables  {
     );
 
 
-  function GetMaxSwapTables(uint256 index,address algebraPoolAddress,bool zeroForOne,SwapCalculationCache memory cache,PriceMovementCache memory step,StateValuesCache memory CurrentState,DataStorage.Timepoint[Constants.UINT16_MODULO] memory  timepointsMemory)
+  function GetMaxSwapTables(uint256 index,address algebraPoolAddress,bool zeroForOne,SwapCalculationCache memory cache,PriceMovementCache memory step,StateValuesCache memory CurrentState,DataStorage.Timepoint[65536] memory  timepointsMemory)
     external view 
     returns (
       RangeDatas memory,
       SwapCalculationCache memory,
       PriceMovementCache memory,
       StateValuesCache memory,
-      DataStorage.Timepoint[Constants.UINT16_MODULO] memory
+      DataStorage.Timepoint[65536] memory
     )
 
 ;
