@@ -13,7 +13,7 @@ import "../../libraries/DataStorage.sol";
 
 
 interface IAlgebraPoolTables  {
-    uint256 private constant UINT16_MODULO = 65536;
+    uint256 constant UINT16_MODULO = 65536;
 
     struct RangeDatas {
     int24 tick;
