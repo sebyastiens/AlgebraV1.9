@@ -66,12 +66,9 @@ library DataStorage {
   /// @notice Transforms a previous timepoint into a new timepoint, given the passage of time and the current tick and liquidity values
   /// @dev blockTimestamp _must_ be chronologically equal to or greater than last.blockTimestamp, safe for 0 or 1 overflows
   /// @param last The specified timepoint to be used in creation of new timepoint
-  /// @param blockTimestamp The timestamp of the new timepoint
-  /// @param tick The active tick at the time of the new timepoint
   /// @param prevTick The active tick at the time of the last timepoint
-  /// @param liquidity The total in-range liquidity at the time of the new timepoint
   /// @param averageTick The average tick at the time of the new timepoint
-  /// @param volumePerLiquidity The gmean(volumes)/liquidity at the time of the new timepoint
+  /// @param temp the struct with all required params
   /// @return Timepoint The newly populated timepoint
   function createNewTimepoint(
     Timepoint memory last,
@@ -215,13 +212,9 @@ library DataStorage {
   /// If called with a timestamp falling between two timepoints, returns the counterfactual accumulator values
   /// at exactly the timestamp between the two timepoints.
   /// @param self The memorized dataStorage array
-  /// @param poolAddress IAlgebraPool(poolAddress).timepoints() The accessible stored data
-  /// @param time The current block timestamp
   /// @param secondsAgo The amount of time to look back, in seconds, at which point to return an timepoint
-  /// @param tick The current tick
-  /// @param index The index of the timepoint that was most recently written to the timepoints array
   /// @param oldestIndex The index of the oldest timepoint
-  /// @param liquidity The current in-range pool liquidity
+  /// @param temp the struct with all required params
   /// @return targetTimepoint desired timepoint or it's approximation
   function getSingleTimepoint(
     Timepoint[UINT16_MODULO] memory self, //avant storage
@@ -298,10 +291,7 @@ library DataStorage {
   /// @notice Returns average volatility in the range from time-WINDOW to time
   /// @param self The memorized dataStorage array
   /// @param poolAddress IAlgebraPool(poolAddress).timepoints() The accessible stored data
-  /// @param time The current block.timestamp
-  /// @param tick The current tick
-  /// @param index The index of the timepoint that was most recently written to the timepoints array
-  /// @param liquidity The current in-range pool liquidity
+  /// @param temp the struct with all required params
   /// @return volatilityAverage The average volatility in the recent range
   /// @return volumePerLiqAverage The average volume per liquidity in the recent range
   function getAverages(
@@ -350,12 +340,7 @@ library DataStorage {
   /// @notice Writes an dataStorage timepoint to the array
   /// @dev Writable at most once per block. Index represents the most recently written element. index must be tracked externally.
   /// @param self The memorized dataStorage array
-  /// @param poolAddress IAlgebraPool(poolAddress).timepoints() The accessible stored data
-  /// @param index The index of the timepoint that was most recently written to the timepoints array
-  /// @param blockTimestamp The timestamp of the new timepoint
-  /// @param tick The active tick at the time of the new timepoint
-  /// @param liquidity The total in-range liquidity at the time of the new timepoint
-  /// @param volumePerLiquidity The gmean(volumes)/liquidity at the time of the new timepoint
+  /// @param temp the struct with all required params
   /// @return indexUpdated The new index of the most recently written element in the dataStorage array
   function write(
     Timepoint[UINT16_MODULO] memory self, //avant storage
