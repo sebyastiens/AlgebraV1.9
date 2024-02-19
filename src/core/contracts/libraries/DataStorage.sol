@@ -384,7 +384,7 @@ library DataStorage {
   }
 
   function UpdateSelf(address poolAddress, uint16 index) internal view returns (Timepoint memory timepoint){
-    (bool initialized, uint32 blockTimestamp, int56 tickCumulative, uint160 secondsPerLiquidityCumulative, uint88 volatilityCumulative, int24 averageTick, uint144 volumePerLiquidityCumulative) = IAlgebraPool(temp.poolAddress).timepoints(index);
+    (bool initialized, uint32 blockTimestamp, int56 tickCumulative, uint160 secondsPerLiquidityCumulative, uint88 volatilityCumulative, int24 averageTick, uint144 volumePerLiquidityCumulative) = IAlgebraPool(poolAddress).timepoints(index);
     timepoint.initialized = initialized;
     timepoint.blockTimestamp = blockTimestamp;
     timepoint.tickCumulative = tickCumulative;
