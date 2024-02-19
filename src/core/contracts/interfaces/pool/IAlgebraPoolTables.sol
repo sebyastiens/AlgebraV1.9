@@ -32,6 +32,7 @@ interface IAlgebraPoolTables  {
     uint16 fee; // The current dynamic fee when zeroToOne is true -> swapping token0 for token1
     int24 startTick; // The tick at the start of a swap
     uint16 timepointIndex; // The index of last written timepoint
+    uint32 blockTimeStamp ; // time when the timepointIndex was created
   }
 
   struct PriceMovementCache {
