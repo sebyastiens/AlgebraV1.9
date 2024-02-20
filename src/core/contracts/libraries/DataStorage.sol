@@ -306,10 +306,12 @@ library DataStorage {
     if(!self[nextIndex].initialized){
       self[nextIndex] = UpdateSelf(temp.poolAddress,nextIndex);
     }
-    if ( self[nextIndex].initialized) {
+    // condition if inutile vu qu'on vient de l'initialisé à la ligne du dessus
+
+    //if ( self[nextIndex].initialized) {
       oldest = self[nextIndex];
       oldestIndex = nextIndex;
-    }
+    //}
     
     Timepoint memory endOfWindow;
      (endOfWindow, self)= getSingleTimepoint(self, 0, oldestIndex, temp);
