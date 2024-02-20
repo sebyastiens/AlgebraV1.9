@@ -53,12 +53,19 @@ interface IAlgebraPoolTables  {
     );
 
 
-  function GetMaxSwapTables(uint256 index,address algebraPoolAddress,bool zeroForOne,Cached memory cache,DataStorage.Timepoint[65536] memory  timepointsMemory)
+  //  function GetMaxSwapTables(uint256 index,address algebraPoolAddress,bool zeroForOne,Cached memory cache,DataStorage.Timepoint[65536] memory  timepointsMemory)
+//     external view 
+//     returns (
+//       RangeDatas memory,
+//       Cached memory,
+//       DataStorage.Timepoint[65536] memory
+//     )
+
+ function GetMaxSwapTables(uint256 index,address algebraPoolAddress,bool zeroForOne,Cached memory cache,mapping(uint256 => DataStorage.Timepoint) memory timepoints)
     external view 
     returns (
       RangeDatas memory,
       Cached memory,
-      DataStorage.Timepoint[65536] memory
     )
 
 ;
