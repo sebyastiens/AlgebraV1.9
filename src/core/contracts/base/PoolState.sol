@@ -16,12 +16,26 @@ abstract contract PoolState is IAlgebraPoolState {
     bool unlocked; // True if the contract is unlocked, otherwise - false
   }
 
+struct Timepoint {
+    bool initialized; // whether or not the timepoint is initialized
+    uint32 blockTimestamp; // the block timestamp of the timepoint
+    int56 tickCumulative; // the tick accumulator, i.e. tick * time elapsed since the pool was first initialized
+    uint160 secondsPerLiquidityCumulative; // the seconds per liquidity since the pool was first initialized
+    uint88 volatilityCumulative; // the volatility accumulator; overflow after ~34800 years is desired :)
+    int24 averageTick; // average tick at this blockTimestamp
+    uint144 volumePerLiquidityCumulative; // the gmean(volumes)/liquidity accumulator
+  }
+
   /// @inheritdoc IAlgebraPoolState
   uint256 public override totalFeeGrowth0Token;
   /// @inheritdoc IAlgebraPoolState
   uint256 public override totalFeeGrowth1Token;
   /// @inheritdoc IAlgebraPoolState
   GlobalState public override globalState;
+ /// @inheritdoc IAlgebraPoolState
+  Timepoint public override timepoints;
+
+
 
   /// @inheritdoc IAlgebraPoolState
   uint128 public override liquidity;
