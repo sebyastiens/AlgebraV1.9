@@ -65,7 +65,7 @@ interface IAlgebraPoolTables  {
     external view 
     returns (
       RangeDatas memory,
-      Cached memory,
+      Cached memory
     )
 
 ;
