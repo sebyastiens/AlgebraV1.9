@@ -102,18 +102,18 @@ interface IAlgebraPoolState {
    * Returns averageTick Time-weighted average tick;
    * Returns volumePerLiquidityCumulative Cumulative swap volume per liquidity for the life of the pool as of the timepoint timestamp;
    */
-  //function timepoints(uint256 index)
-    //external
-   // view
-   // returns (
-    // bool initialized,
-    //  uint32 blockTimestamp,
-     // int56 tickCumulative,
-     // uint160 secondsPerLiquidityCumulative,
-     // uint88 volatilityCumulative,
-     // int24 averageTick,
-     // uint144 volumePerLiquidityCumulative
-   // );
+   function timepoints(uint256 index)
+    external
+   view
+   returns (
+    bool initialized,
+     uint32 blockTimestamp,
+     int56 tickCumulative,
+     uint160 secondsPerLiquidityCumulative,
+     uint88 volatilityCumulative,
+     int24 averageTick,
+     uint144 volumePerLiquidityCumulative
+   );
 
   /**
    * @notice Returns the information about active incentive
