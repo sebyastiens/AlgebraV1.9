@@ -360,13 +360,16 @@ library DataStorage {
     indexUpdated = temp.index + 1;
 
     uint16 oldestIndex;
-    // check if we have overflow in the past
-    if(!self[indexUpdated].initialized){
+    // condition if inutile vu qu'on est plus en storage et que l'array est vide
+    // check if we have overflow in the past 
+    //if(!self[indexUpdated].initialized){
       self[indexUpdated] = UpdateSelf(temp.poolAddress,indexUpdated);
-    }
-    if (self[indexUpdated].initialized) {
+    //}
+    // condition if inutile vu qu'on vient de l'initialisé à la ligne du dessus
+
+    //if (self[indexUpdated].initialized) {
       oldestIndex = indexUpdated;
-    }
+    //}
 
     (int256 rawAvgTick, Timepoint[UINT16_MODULO] memory updatedSelf) = _getAverageTick(self,oldestIndex, last.blockTimestamp, last.tickCumulative,temp);
     int24 avgTick = int24(rawAvgTick);
