@@ -348,10 +348,12 @@ library DataStorage {
     if(!self[temp.index].initialized){
       self[temp.index] = UpdateSelf(temp.poolAddress,temp.index);
     }
-    // early return if we've already written an timepoint this block
-    if (self[temp.index].blockTimestamp == temp.time) {
-      return (temp.index,self);
-    }
+
+    // JE COMMENTE CA CAR ON FAIT UN SEUL CALL DE CETTE FONCTION ET DONC CETTE CONDITION NE SERA JAMAIS VERIFIEE...+ CA JOUERAIT PAS LA CAR CA PASSERAIT DANS LE IF
+    //// early return if we've already written an timepoint this block
+    //if (self[temp.index].blockTimestamp == temp.time) {
+     // return (temp.index,self);
+    //}
     Timepoint memory last = self[temp.index];
 
     // get next index considering overflow
