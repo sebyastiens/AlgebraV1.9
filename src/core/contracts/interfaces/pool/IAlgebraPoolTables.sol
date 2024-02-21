@@ -52,14 +52,13 @@ interface IAlgebraPoolTables  {
       RangeDatas[] memory Max_Injectable_Token0,
       RangeDatas[] memory Max_Injectable_Token1
     );
-    uint256 private constant ReducedArraySize = 15;
 
-    function GetMaxSwapTables(uint256 index,address algebraPoolAddress,bool zeroForOne,Cached memory cache,DataStorage.Timepoint[ReducedArraySize] memory  timepointsMemory)
+    function GetMaxSwapTables(uint256 index,address algebraPoolAddress,bool zeroForOne,Cached memory cache,DataStorage.Timepoint[15] memory  timepointsMemory)
      external view 
      returns (
        RangeDatas memory,
        Cached memory,
-       DataStorage.Timepoint[ReducedArraySize] memory
+       DataStorage.Timepoint[15] memory
      )
 
  //function GetMaxSwapTables(uint256 index,address algebraPoolAddress,bool zeroForOne,Cached memory cache,mapping(uint256 => DataStorage.Timepoint) memory timepoints)
