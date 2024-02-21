@@ -34,6 +34,14 @@ library DataStorage {
     uint128 volumePerLiquidity;
   }
 
+  struct binarySearchStruct {
+    address poolAddress;
+    uint32 time;
+    uint32 target;
+    uint16 lastIndex;
+    uint16 oldestIndex;
+}
+
   /// @notice Calculates volatility between two sequential timepoints with resampling to 1 sec frequency
   /// @param dt Timedelta between timepoints, must be within uint32 range
   /// @param tick0 The tick at the left timepoint, must be within int24 range
@@ -153,43 +161,41 @@ library DataStorage {
   /// @dev The answer must be contained in the array, used when the target is located within the stored timepoint
   /// boundaries: older than the most recent timepoint and younger, or the same age as, the oldest timepoint
   /// @param self The memorized dataStorage array
-  /// @param poolAddress IAlgebraPool(poolAddress).timepoints() The accessible stored data
-  /// @param time The current block.timestamp
-  /// @param target The timestamp at which the reserved timepoint should be for
-  /// @param lastIndex The index of the timepoint that was most recently written to the timepoints array
-  /// @param oldestIndex The index of the oldest timepoint in the timepoints array
+  /// @param param The struct
   /// @return beforeOrAt The timepoint recorded before, or at, the target
   /// @return atOrAfter The timepoint recorded at, or after, the target
   function binarySearch(
     Timepoint[ReducedArraySize] memory self,
-    address poolAddress,
-    uint32 time,
-    uint32 target,
-    uint16 lastIndex,
-    uint16 oldestIndex
+    binarySearchStruct  memory param
+
+    // address poolAddress, // IAlgebraPool(poolAddress).timepoints() The accessible stored data
+    // uint32 time, //time The current block.timestamp
+    // uint32 target,//The timestamp at which the reserved timepoint should be for
+    // uint16 lastIndex, //The index of the timepoint that was most recently written to the timepoints array
+    // uint16 oldestIndex // The index of the oldest timepoint in the timepoints array
   ) private view returns (Timepoint memory beforeOrAt, Timepoint memory atOrAfter) {
-    uint256 left = oldestIndex; // oldest timepoint
-    uint256 right = lastIndex >= oldestIndex ? lastIndex : lastIndex + UINT16_MODULO; // newest timepoint considering one index overflow
+    uint256 left = param.oldestIndex; // oldest timepoint
+    uint256 right = param.lastIndex >= param.oldestIndex ? param.lastIndex : param.lastIndex + UINT16_MODULO; // newest timepoint considering one index overflow
     uint256 current = (left + right) >> 1; // "middle" point between the boundaries
     uint256 ArrayIndex;
     do {
       ArrayIndex = getArrayIndex(self,uint16(current));
       if(!self[ArrayIndex].initialized){
-        self[ArrayIndex] = UpdateSelf(poolAddress,uint16(current));
+        self[ArrayIndex] = UpdateSelf(param.poolAddress,uint16(current));
       }
       beforeOrAt = self[ArrayIndex]; // checking the "middle" point between the boundaries
       (bool initializedBefore, uint32 timestampBefore) = (beforeOrAt.initialized, beforeOrAt.blockTimestamp);
       if (initializedBefore) {
-        if (lteConsideringOverflow(timestampBefore, target, time)) {
+        if (lteConsideringOverflow(timestampBefore, param.target, param.time)) {
           // is current point before or at `target`?
           ArrayIndex = getArrayIndex(self,uint16(current+1));
           if(!self[ArrayIndex].initialized){
-            self[ArrayIndex] = UpdateSelf(poolAddress,uint16(current+1));
+            self[ArrayIndex] = UpdateSelf(param.poolAddress,uint16(current+1));
           }
           atOrAfter = self[ArrayIndex]; // checking the next point after "middle"
           (bool initializedAfter, uint32 timestampAfter) = (atOrAfter.initialized, atOrAfter.blockTimestamp);
           if (initializedAfter) {
-            if (lteConsideringOverflow(target, timestampAfter, time)) {
+            if (lteConsideringOverflow(param.target, timestampAfter, param.time)) {
               // is the "next" point after or at `target`?
               return (beforeOrAt, atOrAfter); // the only fully correct way to finish
             }
@@ -248,7 +254,7 @@ library DataStorage {
 
 
         (int256 rawAvgTick, Timepoint[ReducedArraySize] memory updatedSelf) = _getAverageTick(self, oldestIndex, last.blockTimestamp, last.tickCumulative,temp);
-        int24 avgTick = int24(rawAvgTick);
+        //int24 avgTick = int24(rawAvgTick);
         self = updatedSelf; 
         int24 prevTick = temp.tick;
         {
@@ -264,7 +270,7 @@ library DataStorage {
             prevTick = int24((last.tickCumulative - prevLast.tickCumulative) / (last.blockTimestamp - prevLast.blockTimestamp));
           }
         } 
-        return (createNewTimepoint(last, prevTick, avgTick, temp),self);
+        return (createNewTimepoint(last, prevTick, int24(rawAvgTick), temp),self);
       }
     }
     ArrayIndex = getArrayIndex(self,oldestIndex);
@@ -272,7 +278,18 @@ library DataStorage {
       self[ArrayIndex] = UpdateSelf(temp.poolAddress,oldestIndex);
     }
     require(lteConsideringOverflow(self[ArrayIndex].blockTimestamp, target, temp.time), 'OLD');
-    (Timepoint memory beforeOrAt, Timepoint memory atOrAfter) = binarySearch(self,temp.poolAddress, temp.time, target, temp.index, oldestIndex);
+    binarySearchStruct memory searchParams = binarySearchStruct({
+    poolAddress: temp.poolAddress,
+    time: temp.time, 
+    target: target, 
+    lastIndex: temp.index, 
+    oldestIndex: oldestIndex
+});
+    //(Timepoint memory beforeOrAt, Timepoint memory atOrAfter) = binarySearch(self,temp.poolAddress, temp.time, target, temp.index, oldestIndex);
+    (Timepoint memory beforeOrAt, Timepoint memory atOrAfter) = binarySearch(
+      self,
+      searchParams
+    );
 
     if (target == atOrAfter.blockTimestamp) {
       return (atOrAfter,self); // we're at the right boundary
@@ -372,34 +389,31 @@ library DataStorage {
     // get next index considering overflow
     indexUpdated = temp.index + 1;
 
-    uint16 oldestIndex;
+    //uint16 oldestIndex;
     // condition if inutile vu qu'on est plus en storage et que l'array est vide
     // check if we have overflow in the past 
-    uint256 ArrayIndex = getArrayIndex(self,indexUpdated);
-    if(!self[ArrayIndex].initialized){
-      self[ArrayIndex] = UpdateSelf(temp.poolAddress,indexUpdated);
+    if(!self[getArrayIndex(self,indexUpdated)].initialized){
+      self[getArrayIndex(self,indexUpdated)] = UpdateSelf(temp.poolAddress,indexUpdated);
     }
     // condition if inutile vu qu'on vient de l'initialisé à la ligne du dessus
 
-    //if (self[ArrayIndex].initialized) {
-      oldestIndex = indexUpdated;
+    //if (self[getArrayIndex(self,indexUpdated)].initialized) {
+      //oldestIndex = indexUpdated;
     //}
 
-    (int256 rawAvgTick, Timepoint[ReducedArraySize] memory updatedSelf) = _getAverageTick(self,oldestIndex, self[5].blockTimestamp, self[5].tickCumulative,temp);
+    (int256 rawAvgTick, Timepoint[ReducedArraySize] memory updatedSelf) = _getAverageTick(self,indexUpdated, self[5].blockTimestamp, self[5].tickCumulative,temp); // le temp,index peut être modifié de -1 parfois dedans
     int24 avgTick = int24(rawAvgTick);
     self = updatedSelf; 
     int24 prevTick = temp.tick;
-    if (temp.index != oldestIndex) {
-    ArrayIndex = getArrayIndex(self,temp.index - 1);
-      if(!self[ArrayIndex].initialized){
-        self[ArrayIndex] = UpdateSelf(temp.poolAddress,temp.index - 1);
+    //if (temp.index != indexUpdated) { //temp.index toujours le même . oldestIndex removed variable
+      if(!self[getArrayIndex(self,temp.index - 1)].initialized){
+        self[getArrayIndex(self,temp.index - 1)] = UpdateSelf(temp.poolAddress,temp.index - 1);
       }
-      uint32 _prevLastBlockTimestamp = self[ArrayIndex].blockTimestamp; // considering index underflow
-      int56 _prevLastTickCumulative = self[ArrayIndex].tickCumulative;
-      prevTick = int24((self[5].tickCumulative - _prevLastTickCumulative) / (self[5].blockTimestamp - _prevLastBlockTimestamp));
-    }
-    ArrayIndex = getArrayIndex(self,indexUpdated);
-    self[ArrayIndex] = createNewTimepoint(self[5], prevTick, avgTick, temp);
+      //uint32 _prevLastBlockTimestamp = self[getArrayIndex(self,temp.index - 1)].blockTimestamp; // considering index underflow
+      //int56 _prevLastTickCumulative = self[getArrayIndex(self,temp.index - 1)].tickCumulative;
+      prevTick = int24((self[5].tickCumulative -  self[getArrayIndex(self,temp.index - 1)].tickCumulative) / (self[5].blockTimestamp - self[getArrayIndex(self,temp.index - 1)].blockTimestamp));
+    //}
+    self[getArrayIndex(self,indexUpdated)] = createNewTimepoint(self[5], prevTick, avgTick, temp);
     return (indexUpdated,self);
   }
 
