@@ -50,7 +50,7 @@ interface IAlgebraPoolTables  {
 
     function setPool (address _algebraPoolAddress, uint256 LoopLength) external returns (
       RangeDatas[] memory Max_Injectable_Token0,
-      RangeDatas[] memory Max_Injectable_Token1
+      RangeDatas[] memory Max_Injectable_Token1,
         DataStorage.Timepoint[15] memory  timepointsMemory
     );
 
