@@ -32,8 +32,8 @@ struct Timepoint {
   uint256 public override totalFeeGrowth1Token;
   /// @inheritdoc IAlgebraPoolState
   GlobalState public override globalState;
- /// @inheritdoc IAlgebraPoolState
-  Timepoint public override timepoints;
+ // /// @inheritdoc IAlgebraPoolState
+ //  Timepoint public override timepoints;
 
 
 
