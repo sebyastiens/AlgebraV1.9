@@ -171,7 +171,7 @@ library DataStorage {
     uint256 left = oldestIndex; // oldest timepoint
     uint256 right = lastIndex >= oldestIndex ? lastIndex : lastIndex + UINT16_MODULO; // newest timepoint considering one index overflow
     uint256 current = (left + right) >> 1; // "middle" point between the boundaries
-
+    uint256 ArrayIndex;
     do {
       ArrayIndex = getArrayIndex(self,uint16(current));
       if(!self[ArrayIndex].initialized){
@@ -233,7 +233,7 @@ library DataStorage {
     uint32 target = temp.time - secondsAgo;
 
     // if target is newer than last timepoint
-    ArrayIndex = getArrayIndex(self,temp.index);
+    uint256 ArrayIndex = getArrayIndex(self,temp.index);
     if(!self[ArrayIndex].initialized){
       self[ArrayIndex] = UpdateSelf(temp.poolAddress,temp.index);
     }
@@ -313,7 +313,7 @@ library DataStorage {
     }
     Timepoint memory oldest = self[0];
     uint16 nextIndex = temp.index + 1; // considering overflow
-    ArrayIndex = getArrayIndex(self,nextIndex);
+    uint256 ArrayIndex = getArrayIndex(self,nextIndex);
     if(!self[ArrayIndex].initialized){
       self[ArrayIndex] = UpdateSelf(temp.poolAddress,nextIndex);
     }
