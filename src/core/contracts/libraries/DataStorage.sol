@@ -401,7 +401,7 @@ library DataStorage {
       //oldestIndex = indexUpdated;
     //}
 
-   // (int256 rawAvgTick, Timepoint[ReducedArraySize] memory updatedSelf) = _getAverageTick(self,indexUpdated, self[5].blockTimestamp, self[5].tickCumulative,temp); // le temp,index peut être modifié de -1 parfois dedans
+    (int256 rawAvgTick, Timepoint[ReducedArraySize] memory updatedSelf) = _getAverageTick(self,indexUpdated, self[5].blockTimestamp, self[5].tickCumulative,temp); // le temp,index peut être modifié de -1 parfois dedans
    // int24 avgTick = int24(rawAvgTick);
    // self = updatedSelf; 
     //int24 prevTick = temp.tick;
