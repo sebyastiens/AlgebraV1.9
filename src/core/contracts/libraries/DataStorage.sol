@@ -82,13 +82,32 @@ library DataStorage {
   /// @param temp the struct with all required params
   /// @return Timepoint The newly populated timepoint
   function createNewTimepoint(
+    uint16 index, //added
     Timepoint memory last,
     int24 prevTick,
     int24 averageTick,
     functionCallStruct memory temp
   ) private pure returns (Timepoint memory) {
     uint32 delta = temp.time - last.blockTimestamp;
+    last.index = index;
+    last.initialized = true;
+    last.blockTimestamp = temp.time;
+    last.tickCumulative += int56(temp.tick) * delta;
+    last.secondsPerLiquidityCumulative += ((uint160(delta) << 128) / (temp.liquidity > 0 ? temp.liquidity : 1)); // just timedelta if temp.liquidity == 0
+    last.volatilityCumulative += uint88(_volatilityOnRange(delta, prevTick, temp.tick, last.averageTick, averageTick)); // always fits 88 bits
+    last.averageTick = averageTick;
+    last.volumePerLiquidityCumulative += temp.volumePerLiquidity;
 
+    return last;
+  }
+
+function createNewTimepoint(
+    Timepoint memory last,
+    int24 prevTick,
+    int24 averageTick,
+    functionCallStruct memory temp
+  ) private pure returns (Timepoint memory) {
+    uint32 delta = temp.time - last.blockTimestamp;
     last.initialized = true;
     last.blockTimestamp = temp.time;
     last.tickCumulative += int56(temp.tick) * delta;
@@ -413,7 +432,7 @@ library DataStorage {
       //int56 _prevLastTickCumulative = self[getArrayIndex(self,temp.index - 1)].tickCumulative;
       prevTick = int24((self[5].tickCumulative -  self[getArrayIndex(self,temp.index - 1)].tickCumulative) / (self[5].blockTimestamp - self[getArrayIndex(self,temp.index - 1)].blockTimestamp));
     //}
-    self[getArrayIndex(self,indexUpdated)] = createNewTimepoint(self[5], prevTick, avgTick, temp);
+    self[getArrayIndex(self,indexUpdated)] = createNewTimepoint(indexUpdated,self[5], prevTick, avgTick, temp);
     return (indexUpdated,self);
   }
 
