@@ -47,26 +47,27 @@ interface IAlgebraPoolTables  {
     uint128 currentLiquidity;
   }
 
+
     function setPool (address _algebraPoolAddress, uint256 LoopLength) external returns (
       RangeDatas[] memory Max_Injectable_Token0,
       RangeDatas[] memory Max_Injectable_Token1
     );
+    uint256 private constant ReducedArraySize = 15;
 
+    function GetMaxSwapTables(uint256 index,address algebraPoolAddress,bool zeroForOne,Cached memory cache,DataStorage.Timepoint[ReducedArraySize] memory  timepointsMemory)
+     external view 
+     returns (
+       RangeDatas memory,
+       Cached memory,
+       DataStorage.Timepoint[ReducedArraySize] memory
+     )
 
-  //  function GetMaxSwapTables(uint256 index,address algebraPoolAddress,bool zeroForOne,Cached memory cache,DataStorage.Timepoint[65536] memory  timepointsMemory)
-//     external view 
-//     returns (
-//       RangeDatas memory,
-//       Cached memory,
-//       DataStorage.Timepoint[65536] memory
-//     )
-
- function GetMaxSwapTables(uint256 index,address algebraPoolAddress,bool zeroForOne,Cached memory cache,mapping(uint256 => DataStorage.Timepoint) memory timepoints)
-    external view 
-    returns (
-      RangeDatas memory,
-      Cached memory
-    )
+ //function GetMaxSwapTables(uint256 index,address algebraPoolAddress,bool zeroForOne,Cached memory cache,mapping(uint256 => DataStorage.Timepoint) memory timepoints)
+   // external view 
+   // returns (
+    //  RangeDatas memory,
+    //  Cached memory
+   // )
 
 ;
 
