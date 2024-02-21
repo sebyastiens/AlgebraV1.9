@@ -367,7 +367,7 @@ library DataStorage {
     //if (self[temp.index].blockTimestamp == temp.time) {
      // return (temp.index,self);
     //}
-    Timepoint memory last = self[5];
+    //Timepoint memory last = self[5]; remove 1 local variable
 
     // get next index considering overflow
     indexUpdated = temp.index + 1;
@@ -385,7 +385,7 @@ library DataStorage {
       oldestIndex = indexUpdated;
     //}
 
-    (int256 rawAvgTick, Timepoint[ReducedArraySize] memory updatedSelf) = _getAverageTick(self,oldestIndex, last.blockTimestamp, last.tickCumulative,temp);
+    (int256 rawAvgTick, Timepoint[ReducedArraySize] memory updatedSelf) = _getAverageTick(self,oldestIndex, self[5].blockTimestamp, self[5].tickCumulative,temp);
     int24 avgTick = int24(rawAvgTick);
     self = updatedSelf; 
     int24 prevTick = temp.tick;
@@ -396,10 +396,10 @@ library DataStorage {
       }
       uint32 _prevLastBlockTimestamp = self[ArrayIndex].blockTimestamp; // considering index underflow
       int56 _prevLastTickCumulative = self[ArrayIndex].tickCumulative;
-      prevTick = int24((last.tickCumulative - _prevLastTickCumulative) / (last.blockTimestamp - _prevLastBlockTimestamp));
+      prevTick = int24((self[5].tickCumulative - _prevLastTickCumulative) / (self[5].blockTimestamp - _prevLastBlockTimestamp));
     }
     ArrayIndex = getArrayIndex(self,indexUpdated);
-    self[ArrayIndex] = createNewTimepoint(last, prevTick, avgTick, temp);
+    self[ArrayIndex] = createNewTimepoint(self[5], prevTick, avgTick, temp);
     return (indexUpdated,self);
   }
 
