@@ -116,7 +116,7 @@ library DataStorage {
     int56 lastTickCumulative,
     functionCallStruct memory temp
   ) internal view returns (int256 avgTick,Timepoint[ReducedArraySize] memory) {
-    ArrayIndex = getArrayIndex(self,oldestIndex);
+    uint256 ArrayIndex = getArrayIndex(self,oldestIndex);
     if(!self[ArrayIndex].initialized){
       self[ArrayIndex] = UpdateSelf(temp.poolAddress,oldestIndex);
     }
