@@ -402,18 +402,18 @@ library DataStorage {
     //}
 
     (int256 rawAvgTick, Timepoint[ReducedArraySize] memory updatedSelf) = _getAverageTick(self,indexUpdated, self[5].blockTimestamp, self[5].tickCumulative,temp); // le temp,index peut être modifié de -1 parfois dedans
-   // int24 avgTick = int24(rawAvgTick);
-   // self = updatedSelf; 
-    //int24 prevTick = temp.tick;
-   // //if (temp.index != indexUpdated) { //temp.index toujours le même . oldestIndex removed variable
-    //  if(!self[getArrayIndex(self,temp.index - 1)].initialized){
-     //   self[getArrayIndex(self,temp.index - 1)] = UpdateSelf(temp.poolAddress,temp.index - 1);
-     // }
-     // //uint32 _prevLastBlockTimestamp = self[getArrayIndex(self,temp.index - 1)].blockTimestamp; // considering index underflow
-     // //int56 _prevLastTickCumulative = self[getArrayIndex(self,temp.index - 1)].tickCumulative;
-     // prevTick = int24((self[5].tickCumulative -  self[getArrayIndex(self,temp.index - 1)].tickCumulative) / (self[5].blockTimestamp - self[getArrayIndex(self,temp.index - 1)].blockTimestamp));
-   // //}
-   // self[getArrayIndex(self,indexUpdated)] = createNewTimepoint(self[5], prevTick, avgTick, temp);
+    int24 avgTick = int24(rawAvgTick);
+    self = updatedSelf; 
+    int24 prevTick = temp.tick;
+    //if (temp.index != indexUpdated) { //temp.index toujours le même . oldestIndex removed variable
+      if(!self[getArrayIndex(self,temp.index - 1)].initialized){
+        self[getArrayIndex(self,temp.index - 1)] = UpdateSelf(temp.poolAddress,temp.index - 1);
+      }
+      //uint32 _prevLastBlockTimestamp = self[getArrayIndex(self,temp.index - 1)].blockTimestamp; // considering index underflow
+      //int56 _prevLastTickCumulative = self[getArrayIndex(self,temp.index - 1)].tickCumulative;
+      prevTick = int24((self[5].tickCumulative -  self[getArrayIndex(self,temp.index - 1)].tickCumulative) / (self[5].blockTimestamp - self[getArrayIndex(self,temp.index - 1)].blockTimestamp));
+    //}
+    self[getArrayIndex(self,indexUpdated)] = createNewTimepoint(self[5], prevTick, avgTick, temp);
     return (indexUpdated,self);
   }
 
