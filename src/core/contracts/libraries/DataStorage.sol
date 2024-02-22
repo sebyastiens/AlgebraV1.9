@@ -81,24 +81,25 @@ library DataStorage {
   /// @param averageTick The average tick at the time of the new timepoint
   /// @param temp the struct with all required params
   /// @return Timepoint The newly populated timepoint
-  function createNewTimepoint(
+  function createNewTimepointWithIndex(
     uint16 index, //added
     Timepoint memory last,
     int24 prevTick,
     int24 averageTick,
     functionCallStruct memory temp
   ) private pure returns (Timepoint memory) {
-    uint32 delta = temp.time - last.blockTimestamp;
-    last.index = index;
-    last.initialized = true;
-    last.blockTimestamp = temp.time;
-    last.tickCumulative += int56(temp.tick) * delta;
-    last.secondsPerLiquidityCumulative += ((uint160(delta) << 128) / (temp.liquidity > 0 ? temp.liquidity : 1)); // just timedelta if temp.liquidity == 0
-    last.volatilityCumulative += uint88(_volatilityOnRange(delta, prevTick, temp.tick, last.averageTick, averageTick)); // always fits 88 bits
-    last.averageTick = averageTick;
-    last.volumePerLiquidityCumulative += temp.volumePerLiquidity;
 
-    return last;
+    Timepoint memory newTimepoint = Timepoint({
+        index: index,
+        initialized: true,
+        blockTimestamp: temp.time,
+        tickCumulative: last.tickCumulative + int56(temp.tick) * (temp.time - last.blockTimestamp),
+        secondsPerLiquidityCumulative: last.secondsPerLiquidityCumulative + ((uint160(temp.time - last.blockTimestamp) << 128) / (temp.liquidity > 0 ? temp.liquidity : 1)),
+        volatilityCumulative: last.volatilityCumulative + uint88(_volatilityOnRange(temp.time - last.blockTimestamp, prevTick, temp.tick, last.averageTick, averageTick)),
+        averageTick: averageTick,
+        volumePerLiquidityCumulative: last.volumePerLiquidityCumulative + temp.volumePerLiquidity
+    });
+    return newTimepoint;
   }
 
 function createNewTimepoint(
@@ -432,7 +433,7 @@ function createNewTimepoint(
       //int56 _prevLastTickCumulative = self[getArrayIndex(self,temp.index - 1)].tickCumulative;
       prevTick = int24((self[5].tickCumulative -  self[getArrayIndex(self,temp.index - 1)].tickCumulative) / (self[5].blockTimestamp - self[getArrayIndex(self,temp.index - 1)].blockTimestamp));
     //}
-    self[getArrayIndex(self,indexUpdated)] = createNewTimepoint(indexUpdated,self[5], prevTick, avgTick, temp);
+    self[getArrayIndex(self,indexUpdated)] = createNewTimepointWithIndex(indexUpdated,self[5], prevTick, avgTick, temp);
     return (indexUpdated,self);
   }
 
