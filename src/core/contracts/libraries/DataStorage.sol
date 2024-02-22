@@ -401,9 +401,9 @@ function createNewTimepoint(
 
     // JE COMMENTE CA CAR ON FAIT UN SEUL CALL DE CETTE FONCTION ET DONC CETTE CONDITION NE SERA JAMAIS VERIFIEE...+ CA JOUERAIT PAS LA CAR CA PASSERAIT DANS LE IF
     //// early return if we've already written an timepoint this block
-    //if (self[temp.index].blockTimestamp == temp.time) {
-     // return (temp.index,self);
-    //}
+    if (self[5].blockTimestamp == temp.time) {
+     return (temp.index,self);
+    }
     //Timepoint memory last = self[5]; remove 1 local variable
 
     // get next index considering overflow
