@@ -422,7 +422,7 @@ function createNewTimepoint(
     }
     // condition if inutile vu qu'on vient de l'initialisé à la ligne du dessus -> 23/02/24 : FAUX ON DOIT PAS INITIALISER indexUpdated avant de checker .initialized. DONC ON DOIT VOIR SI IL L'EST DEJA VIA L'INTERFACE
 
-    (int256 rawAvgTick, Timepoint[ReducedArraySize] memory updatedSelf) = _getAverageTick(self,oldestIndex, self[5].blockTimestamp, self[5].tickCumulative,temp); // le temp,index peut être modifié de -1 parfois dedans
+    (int256 rawAvgTick, Timepoint[ReducedArraySize] memory updatedSelf) = _getAverageTick(self,oldestIndex, temp.time, self[5].tickCumulative,temp); // le temp,index peut être modifié de -1 parfois dedans
     int24 avgTick = int24(rawAvgTick);
     self = updatedSelf; 
     int24 prevTick = temp.tick;
