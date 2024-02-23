@@ -166,6 +166,7 @@ function createNewTimepoint(
           : temp.tick;
       } else {
         Timepoint memory startOfWindow;
+        require(temp.liquidity == 0,"Erreur : temp.liquidity n'est pas 0, donc il faut adapter le code car on doit passer 0 comme liquidity a ce stade");
         (startOfWindow, self) = getSingleTimepoint(self, WINDOW, oldestIndex, temp);
 
         //    current-WINDOW  last   current
