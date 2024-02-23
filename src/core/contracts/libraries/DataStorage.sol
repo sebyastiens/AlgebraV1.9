@@ -395,9 +395,9 @@ function createNewTimepoint(
     Timepoint[ReducedArraySize] memory self, //avant storage
     functionCallStruct memory temp
   ) internal view returns (uint16 indexUpdated,Timepoint[ReducedArraySize] memory) {
-    if(!self[5].initialized){ 
+    //if(!self[5].initialized){ // inutil car self est toujours vide à ce stade du code
       self[5] = UpdateSelf(temp.poolAddress,temp.index);
-    }
+    //}
 
     // JE COMMENTE CA CAR ON FAIT UN SEUL CALL DE CETTE FONCTION ET DONC CETTE CONDITION NE SERA JAMAIS VERIFIEE...+ CA JOUERAIT PAS LA CAR CA PASSERAIT DANS LE IF
     //// early return if we've already written an timepoint this block
@@ -422,14 +422,14 @@ function createNewTimepoint(
     int24 avgTick = int24(rawAvgTick);
     self = updatedSelf; 
     int24 prevTick = temp.tick;
-    //if (temp.index != indexUpdated) { //temp.index toujours le même . oldestIndex removed variable
+    if (temp.index != oldestIndex) {
       if(!self[getArrayIndex(self,temp.index - 1)].initialized){
         self[getArrayIndex(self,temp.index - 1)] = UpdateSelf(temp.poolAddress,temp.index - 1);
       }
       //uint32 _prevLastBlockTimestamp = self[getArrayIndex(self,temp.index - 1)].blockTimestamp; // considering index underflow
       //int56 _prevLastTickCumulative = self[getArrayIndex(self,temp.index - 1)].tickCumulative;
       prevTick = int24((self[5].tickCumulative -  self[getArrayIndex(self,temp.index - 1)].tickCumulative) / (self[5].blockTimestamp - self[getArrayIndex(self,temp.index - 1)].blockTimestamp));
-    //}
+    }
     self[getArrayIndex(self,indexUpdated)] = createNewTimepointWithIndex(indexUpdated,self[5], prevTick, avgTick, temp);
     return (indexUpdated,self);
   }
