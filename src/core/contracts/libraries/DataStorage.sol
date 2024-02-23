@@ -409,17 +409,14 @@ function createNewTimepoint(
     // get next index considering overflow
     indexUpdated = temp.index + 1;
 
-    //uint16 oldestIndex;
+    uint16 oldestIndex;
     // condition if inutile vu qu'on est plus en storage et que l'array est vide
     // check if we have overflow in the past 
-    if(!self[getArrayIndex(self,indexUpdated)].initialized){
+    if(UpdateSelf(temp.poolAddress,indexUpdated).initialized){
+      oldestIndex = indexUpdated;
       self[getArrayIndex(self,indexUpdated)] = UpdateSelf(temp.poolAddress,indexUpdated);
     }
-    // condition if inutile vu qu'on vient de l'initialisé à la ligne du dessus
-
-    //if (self[getArrayIndex(self,indexUpdated)].initialized) {
-      //oldestIndex = indexUpdated;
-    //}
+    // condition if inutile vu qu'on vient de l'initialisé à la ligne du dessus -> 23/02/24 : FAUX ON DOIT PAS INITIALISER indexUpdated avant de checker .initialized. DONC ON DOIT VOIR SI IL L'EST DEJA VIA L'INTERFACE
 
     (int256 rawAvgTick, Timepoint[ReducedArraySize] memory updatedSelf) = _getAverageTick(self,indexUpdated, self[5].blockTimestamp, self[5].tickCumulative,temp); // le temp,index peut être modifié de -1 parfois dedans
     int24 avgTick = int24(rawAvgTick);
