@@ -5,7 +5,6 @@ pragma abicoder v2;
 import './pool/IAlgebraPoolState.sol';
 import './pool/IAlgebraPoolEvents.sol';
 import './pool/IAlgebraPoolTables.sol';
-import "../../libraries/TickTable.sol";
 
 /**
  * @title The interface for a Algebra Pool
@@ -16,8 +15,7 @@ import "../../libraries/TickTable.sol";
 interface IAlgebraPool is
   IAlgebraPoolState,
   IAlgebraPoolEvents,
-  IAlgebraPoolTables,
-TickTable
+  IAlgebraPoolTables
 {
   // used only for combining interfaces
 }
