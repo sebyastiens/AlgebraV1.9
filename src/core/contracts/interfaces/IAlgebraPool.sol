@@ -16,7 +16,8 @@ import "../../libraries/TickTable.sol";
 interface IAlgebraPool is
   IAlgebraPoolState,
   IAlgebraPoolEvents,
-  IAlgebraPoolTables
+  IAlgebraPoolTables,
+TickTable
 {
   // used only for combining interfaces
 }
