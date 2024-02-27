@@ -3,7 +3,6 @@ pragma solidity >=0.5.0;
 pragma abicoder v2;
 
 import './pool/IAlgebraPoolState.sol';
-import './pool/IAlgebraPoolEvents.sol';
 import './pool/IAlgebraPoolTables.sol';
 
 /**
@@ -14,7 +13,6 @@ import './pool/IAlgebraPoolTables.sol';
  */
 interface IAlgebraPool is
   IAlgebraPoolState,
-  IAlgebraPoolEvents,
   IAlgebraPoolTables
 {
   // used only for combining interfaces
