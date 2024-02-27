@@ -439,15 +439,16 @@ function createNewTimepoint(
   }
 
   function UpdateSelf(address poolAddress, uint16 index) internal view returns (Timepoint memory timepoint){
-    (bool initialized, uint32 blockTimestamp, int56 tickCumulative, uint160 secondsPerLiquidityCumulative, uint88 volatilityCumulative, int24 averageTick, uint144 volumePerLiquidityCumulative) = IAlgebraPool(poolAddress).timepoints(index);
-    timepoint.index = index;
-    timepoint.initialized = initialized;
-    timepoint.blockTimestamp = blockTimestamp;
-    timepoint.tickCumulative = tickCumulative;
-    timepoint.secondsPerLiquidityCumulative = secondsPerLiquidityCumulative;
-    timepoint.volatilityCumulative = volatilityCumulative;
-    timepoint.averageTick = averageTick;
-    timepoint.volumePerLiquidityCumulative = volumePerLiquidityCumulative;    
+    // COMMENTé POUR EVITER LES SOUCIS AVEC timepoints. SI ON VEUT LA REUTILIER IL FAUT Ré-AJOUTER timepoints dans IAlgebraPoolState    
+//(bool initialized, uint32 blockTimestamp, int56 tickCumulative, uint160 secondsPerLiquidityCumulative, uint88 volatilityCumulative, int24 averageTick, uint144 volumePerLiquidityCumulative) = IAlgebraPool(poolAddress).timepoints(index);
+    //timepoint.index = index;
+    //timepoint.initialized = initialized;
+    //timepoint.blockTimestamp = blockTimestamp;
+    //timepoint.tickCumulative = tickCumulative;
+    //timepoint.secondsPerLiquidityCumulative = secondsPerLiquidityCumulative;
+    //timepoint.volatilityCumulative = volatilityCumulative;
+    //timepoint.averageTick = averageTick;
+    //timepoint.volumePerLiquidityCumulative = volumePerLiquidityCumulative;    
   }
 
 function getArrayIndex(Timepoint[ReducedArraySize] memory timepoints, uint16 index) internal pure returns (uint256 Arrayindex) { // Arrayindex could be uint8 but not sure it costs less
