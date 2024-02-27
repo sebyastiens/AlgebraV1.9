@@ -10,7 +10,7 @@ pragma abicoder v2;
  * @dev Credit to Uniswap Labs under GPL-2.0-or-later license:
  * https://github.com/Uniswap/v3-core/tree/main/contracts/interfaces
  */
-import "../../libraries/DataStorage.sol";
+//import "../../libraries/DataStorage.sol";
 
 interface IAlgebraPoolTables  {
 
@@ -50,8 +50,8 @@ interface IAlgebraPoolTables  {
 
     function setPool (address _algebraPoolAddress, uint256 LoopLength) external returns (
       RangeDatas[] memory Max_Injectable_Token0,
-      RangeDatas[] memory Max_Injectable_Token1,
-        DataStorage.Timepoint[15] memory  timepointsMemory
+      RangeDatas[] memory Max_Injectable_Token1
+       // DataStorage.Timepoint[15] memory  timepointsMemory
     );
 
     //function GetMaxSwapTables(uint256 index,address algebraPoolAddress,bool zeroForOne,Cached memory cache,DataStorage.Timepoint[15] memory  timepointsMemory)
