@@ -33,7 +33,7 @@ struct Timepoint {
   /// @inheritdoc IAlgebraPoolState
   GlobalState public override globalState;
  // /// @inheritdoc IAlgebraPoolState
- //  Timepoint public override timepoints;
+   Timepoint public override timepoints; //ADDED 
 
 
 
